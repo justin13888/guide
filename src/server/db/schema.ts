@@ -109,3 +109,23 @@ export const verificationTokens = createTable(
   }),
   (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
+
+export const courses = createTable(
+  "course",
+  (d) => ({
+    id: d.bigint({ mode: "number" }).primaryKey().autoincrement(),
+    courseId: d.varchar({ length: 10 }).notNull(),
+    title: d.varchar({ length: 255 }).notNull(),
+    description: d.text(),
+    catalogNumber: d.varchar({ length: 10 }).notNull(),
+    createdAt: d
+      .timestamp()
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    updatedAt: d.timestamp().onUpdateNow(),
+  }),
+  (t) => [
+    index("course_id_idx").on(t.courseId),
+    index("catalog_number_idx").on(t.catalogNumber),
+  ],
+);
