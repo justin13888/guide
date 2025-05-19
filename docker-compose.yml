@@ -1,0 +1,18 @@
+services:
+  mysql:
+    image: mysql:9.3.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: guide
+      # MYSQL_USER: guide
+      # MYSQL_PASSWORD: guide
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # - ./my.cnf:/etc/mysql/conf.d/custom.cnf # Optional: Custom MySQL configuration
+
+volumes:
+  mysql_data: # Defines the named volume for persistent storage
