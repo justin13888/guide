@@ -17,7 +17,8 @@
     "lint:fix": "next lint --fix",
     "preview": "next build && next start",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "fetch-courses": "tsx scripts/fetch-courses.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.7.2",
@@ -42,6 +43,7 @@
     "@types/node": "^20.14.10",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "dotenv": "^16.5.0",
     "drizzle-kit": "^0.30.5",
     "eslint": "^9.23.0",
     "eslint-config-next": "^15.2.3",
@@ -50,6 +52,7 @@
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
     "tailwindcss": "^4.0.15",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.27.0"
   },

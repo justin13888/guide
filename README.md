@@ -19,6 +19,9 @@ docker compose up
 # Initialize Drizzle schema
 pnpm run db:push
 
+# Fetch course data
+pnpm fetch-courses
+
 # Start dev server
 pnpm dev
 # Open http://localhost:3000
