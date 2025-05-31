@@ -15,6 +15,7 @@ import { sql } from "drizzle-orm";
  */
 
 // Courses table
+
 export const courses = pgTable(
   "courses",
   {
