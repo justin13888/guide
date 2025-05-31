@@ -1,111 +1,75 @@
-import { relations, sql } from "drizzle-orm";
-import { index, mysqlTableCreator, primaryKey } from "drizzle-orm/mysql-core";
-import { type AdapterAccount } from "next-auth/adapters";
-
+import {
+  pgTable,
+  serial,
+  varchar,
+  text,
+  integer,
+  boolean,
+} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
  * database instance for multiple projects.
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = mysqlTableCreator((name) => `guide_${name}`);
 
-export const posts = createTable(
-  "post",
-  (d) => ({
-    id: d.bigint({ mode: "number" }).primaryKey().autoincrement(),
-    name: d.varchar({ length: 256 }),
-    createdById: d
-      .varchar({ length: 255 })
+// Courses table
+export const courses = pgTable(
+  "courses",
+  {
+    id: serial("id").primaryKey(),
+    courseCode: varchar("course_code", { length: 10 }).unique().notNull(),
+    title: text("title"),
+    description: text("description"),
+    requirements: text("requirements"),
+    term: varchar("term", { length: 1 }).notNull(),
+  },
+  (table) => [sql`CHECK (${table.term} IN ('F', 'W', 'S'))`],
+);
+
+// Course Requirement Groups table
+export const courseRequirementGroups = pgTable(
+  "course_requirement_groups",
+  {
+    id: serial("id").primaryKey(),
+    courseCode: varchar("course_code", { length: 10 })
       .notNull()
-      .references(() => users.id),
-    createdAt: d
-      .timestamp()
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: d.timestamp().onUpdateNow(),
-  }),
-  (t) => [
-    index("created_by_idx").on(t.createdById),
-    index("name_idx").on(t.name),
+      .references(() => courses.courseCode, { onDelete: "cascade" }),
+    outerRelationType: varchar("outer_relation_type", { length: 3 }).notNull(),
+  },
+  (table) => [sql`CHECK (${table.outerRelationType} IN ('AND', 'OR'))`],
+);
+
+// Course Requirements table
+export const courseRequirements = pgTable(
+  "course_requirements",
+  {
+    id: serial("id").primaryKey(),
+    groupId: integer("group_id")
+      .notNull()
+      .references(() => courseRequirementGroups.id, { onDelete: "cascade" }),
+    relatedCourse: varchar("related_course", { length: 10 }).notNull(),
+    innerRelationType: varchar("inner_relation_type", { length: 3 }).notNull(),
+    minGrade: integer("min_grade"),
+    isAntireq: boolean("is_antireq").notNull().default(false),
+    isCoreq: boolean("is_coreq").notNull().default(false),
+  },
+  (table) => [sql`CHECK (${table.innerRelationType} IN ('AND', 'OR'))`],
+);
+
+// Course Restrictions table
+export const courseRestrictions = pgTable(
+  "course_restrictions",
+  {
+    id: serial("id").primaryKey(),
+    courseCode: varchar("course_code", { length: 10 })
+      .notNull()
+      .references(() => courses.courseCode, { onDelete: "cascade" }),
+    requirementType: varchar("requirement_type", { length: 10 }).notNull(),
+    value: text("value").notNull(),
+  },
+  (table) => [
+    sql`CHECK (${table.requirementType} IN ('LEVEL', 'PROGRAM', 'FACULTY'))`,
   ],
-);
-
-export const users = createTable("user", (d) => ({
-  id: d
-    .varchar({ length: 255 })
-    .notNull()
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  name: d.varchar({ length: 255 }),
-  email: d.varchar({ length: 255 }).notNull(),
-  emailVerified: d
-    .timestamp({
-      mode: "date",
-      fsp: 3,
-    })
-    .default(sql`CURRENT_TIMESTAMP(3)`),
-  image: d.varchar({ length: 255 }),
-}));
-
-export const usersRelations = relations(users, ({ many }) => ({
-  accounts: many(accounts),
-  sessions: many(sessions),
-}));
-
-export const accounts = createTable(
-  "account",
-  (d) => ({
-    userId: d
-      .varchar({ length: 255 })
-      .notNull()
-      .references(() => users.id),
-    type: d.varchar({ length: 255 }).$type<AdapterAccount["type"]>().notNull(),
-    provider: d.varchar({ length: 255 }).notNull(),
-    providerAccountId: d.varchar({ length: 255 }).notNull(),
-    refresh_token: d.text(),
-    access_token: d.text(),
-    expires_at: d.int(),
-    token_type: d.varchar({ length: 255 }),
-    scope: d.varchar({ length: 255 }),
-    id_token: d.text(),
-    session_state: d.varchar({ length: 255 }),
-  }),
-  (t) => [
-    primaryKey({
-      columns: [t.provider, t.providerAccountId],
-    }),
-    index("account_user_id_idx").on(t.userId),
-  ],
-);
-
-export const accountsRelations = relations(accounts, ({ one }) => ({
-  user: one(users, { fields: [accounts.userId], references: [users.id] }),
-}));
-
-export const sessions = createTable(
-  "session",
-  (d) => ({
-    sessionToken: d.varchar({ length: 255 }).notNull().primaryKey(),
-    userId: d
-      .varchar({ length: 255 })
-      .notNull()
-      .references(() => users.id),
-    expires: d.timestamp({ mode: "date" }).notNull(),
-  }),
-  (t) => [index("session_user_id_idx").on(t.userId)],
-);
-
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  user: one(users, { fields: [sessions.userId], references: [users.id] }),
-}));
-
-export const verificationTokens = createTable(
-  "verification_token",
-  (d) => ({
-    identifier: d.varchar({ length: 255 }).notNull(),
-    token: d.varchar({ length: 255 }).notNull(),
-    expires: d.timestamp({ mode: "date" }).notNull(),
-  }),
-  (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
