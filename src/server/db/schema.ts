@@ -24,9 +24,7 @@ export const courses = pgTable(
     title: text("title"),
     description: text("description"),
     requirements: text("requirements"),
-    term: varchar("term", { length: 1 }).notNull(),
   },
-  (table) => [sql`CHECK (${table.term} IN ('F', 'W', 'S'))`],
 );
 
 // Course Requirement Groups table
@@ -57,6 +55,20 @@ export const courseRequirements = pgTable(
     isCoreq: boolean("is_coreq").notNull().default(false),
   },
   (table) => [sql`CHECK (${table.innerRelationType} IN ('AND', 'OR'))`],
+);
+
+// Terms Offered Table table
+export const termOffered = pgTable(
+  "term_offered",
+  {
+    courseCode: varchar("course_code", { length: 10 })
+    .notNull()
+    .primaryKey()
+      .references(() => courses.courseCode, { onDelete: "cascade" }),
+    fall: boolean().notNull().default(false),
+    winter: boolean().notNull().default(false),
+    spring: boolean().notNull().default(false),
+  },
 );
 
 // Course Restrictions table
