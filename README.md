@@ -13,7 +13,7 @@ Your guide to UW course planning
 ```sh
 pnpm install
 
-# Spin up dev MySQL server (and other dependencies)
+# Spin up dev PostgreSQL server (and other dependencies)
 docker compose up
 
 # Initialize Drizzle schema
