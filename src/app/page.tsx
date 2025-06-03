@@ -7,7 +7,7 @@ import { api, HydrateClient } from "~/trpc/server";
 import SideBar from "~/app/_components/sidebar";
 
 export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
+  const hello = await api.planner.hello({ text: "from f" });
   const session = await auth();
 
   if (session?.user) {
@@ -18,6 +18,9 @@ export default async function Home() {
     <div className="flex min-h-full absolute inset-0">
       <div className="flex-1">
         {/* Main content area */}
+        <p>
+          {hello.greeting} <br />
+        </p>
       </div>
       <SideBar />
     </div>
