@@ -37,16 +37,16 @@ importers:
         version: 11.1.2(typescript@5.8.3)
       drizzle-orm:
         specifier: ^0.41.0
-        version: 0.41.0(@types/pg@8.15.4)(gel@2.1.0)(mysql2@3.14.1)(pg@8.16.0)
+        version: 0.41.0(@types/pg@8.15.4)(gel@2.1.0)(mysql2@3.14.1)(pg@8.16.0)(postgres@3.4.7)
       next:
         specifier: ^15.2.3
         version: 15.3.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       next-auth:
         specifier: 5.0.0-beta.25
         version: 5.0.0-beta.25(next@15.3.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
-      pg:
-        specifier: ^8.16.0
-        version: 8.16.0
+      postgres:
+        specifier: ^3.4.7
+        version: 3.4.7
       react:
         specifier: ^19.0.0
         version: 19.1.0
@@ -72,9 +72,6 @@ importers:
       '@types/node':
         specifier: ^20.14.10
         version: 20.17.48
-      '@types/pg':
-        specifier: ^8.15.4
-        version: 8.15.4
       '@types/react':
         specifier: ^19.0.0
         version: 19.1.4
@@ -2374,6 +2371,10 @@ packages:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
 
+  postgres@3.4.7:
+    resolution: {integrity: sha512-Jtc2612XINuBjIl/QTWsV5UvE8UHuNblcO3vVADSrKsrc6RqGX6lOW1cEo3CM2v0XG4Nat8nI+YM7/f26VxXLw==}
+    engines: {node: '>=12'}
+
   preact-render-to-string@5.2.3:
     resolution: {integrity: sha512-aPDxUn5o3GhWdtJtW0svRC2SS/l8D9MAgo2+AWml+BhDImb27ALf04Q2d+AHqUUOc6RdSXFIBVa2gxzgMKgtZA==}
     peerDependencies:
@@ -3442,6 +3443,7 @@ snapshots:
       '@types/node': 20.17.48
       pg-protocol: 1.10.0
       pg-types: 2.2.0
+    optional: true
 
   '@types/react-dom@19.1.5(@types/react@19.1.4)':
     dependencies:
@@ -3830,12 +3832,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.41.0(@types/pg@8.15.4)(gel@2.1.0)(mysql2@3.14.1)(pg@8.16.0):
+  drizzle-orm@0.41.0(@types/pg@8.15.4)(gel@2.1.0)(mysql2@3.14.1)(pg@8.16.0)(postgres@3.4.7):
     optionalDependencies:
       '@types/pg': 8.15.4
       gel: 2.1.0
       mysql2: 3.14.1
       pg: 8.16.0
+      postgres: 3.4.7
 
   dunder-proto@1.0.1:
     dependencies:
@@ -4826,15 +4829,19 @@ snapshots:
   pg-cloudflare@1.2.5:
     optional: true
 
-  pg-connection-string@2.9.0: {}
+  pg-connection-string@2.9.0:
+    optional: true
 
-  pg-int8@1.0.1: {}
+  pg-int8@1.0.1:
+    optional: true
 
   pg-pool@3.10.0(pg@8.16.0):
     dependencies:
       pg: 8.16.0
+    optional: true
 
-  pg-protocol@1.10.0: {}
+  pg-protocol@1.10.0:
+    optional: true
 
   pg-types@2.2.0:
     dependencies:
@@ -4843,6 +4850,7 @@ snapshots:
       postgres-bytea: 1.0.0
       postgres-date: 1.0.7
       postgres-interval: 1.2.0
+    optional: true
 
   pg@8.16.0:
     dependencies:
@@ -4853,10 +4861,12 @@ snapshots:
       pgpass: 1.0.5
     optionalDependencies:
       pg-cloudflare: 1.2.5
+    optional: true
 
   pgpass@1.0.5:
     dependencies:
       split2: 4.2.0
+    optional: true
 
   picocolors@1.1.1: {}
 
@@ -4878,15 +4888,21 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  postgres-array@2.0.0: {}
+  postgres-array@2.0.0:
+    optional: true
 
-  postgres-bytea@1.0.0: {}
+  postgres-bytea@1.0.0:
+    optional: true
 
-  postgres-date@1.0.7: {}
+  postgres-date@1.0.7:
+    optional: true
 
   postgres-interval@1.2.0:
     dependencies:
       xtend: 4.0.2
+    optional: true
+
+  postgres@3.4.7: {}
 
   preact-render-to-string@5.2.3(preact@10.11.3):
     dependencies:
@@ -5105,7 +5121,8 @@ snapshots:
 
   source-map@0.6.1: {}
 
-  split2@4.2.0: {}
+  split2@4.2.0:
+    optional: true
 
   sqlstring@2.3.3:
     optional: true
@@ -5360,7 +5377,8 @@ snapshots:
 
   word-wrap@1.2.5: {}
 
-  xtend@4.0.2: {}
+  xtend@4.0.2:
+    optional: true
 
   yallist@5.0.0: {}
 

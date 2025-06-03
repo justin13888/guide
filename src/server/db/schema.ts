@@ -18,6 +18,9 @@ import { type AdapterAccount } from "next-auth/adapters";
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
 
+// TODO: Replace crypto.randomUUID() with uuidv7 and use stricter uuid column type
+
+// TODO: Remove this vv
 export const posts = pgTable(
   "post",
   (d) => ({
@@ -56,7 +59,7 @@ export const users = pgTable("user", (d) => ({
   image: d.varchar({ length: 255 }),
 }));
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   accounts: many(accounts),
 }));
 
@@ -116,7 +119,6 @@ export const verificationTokens = pgTable(
 );
 
 // Courses table
-
 export const courses = pgTable(
   "courses",
   {
