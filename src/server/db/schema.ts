@@ -57,7 +57,7 @@ export const courseRequirements = pgTable(
   (table) => [sql`CHECK (${table.innerRelationType} IN ('AND', 'OR'))`],
 );
 
-// Terms Offered Table table
+// Terms Offered table
 export const termOffered = pgTable(
   "term_offered",
   {
