@@ -13,11 +13,14 @@ Your guide to UW course planning
 ```sh
 pnpm install
 
-# Spin up dev MySQL server (and other dependencies)
+# Spin up dev PostgreSQL server (and other dependencies)
 docker compose up
 
 # Initialize Drizzle schema
 pnpm run db:push
+
+# Fetch course data
+pnpm fetch-courses
 
 # Start dev server
 pnpm dev
