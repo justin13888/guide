@@ -6,6 +6,7 @@ import {
   integer,
   boolean,
   primaryKey,
+  index,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import { type AdapterAccount } from "next-auth/adapters";
@@ -38,7 +39,7 @@ export const posts = pgTable(
   (t) => [
     index("created_by_idx").on(t.createdById),
     index("name_idx").on(t.name),
-  ]
+  ],
 );
 
 export const users = pgTable("user", (d) => ({
@@ -83,7 +84,7 @@ export const accounts = pgTable(
   (t) => [
     primaryKey({ columns: [t.provider, t.providerAccountId] }),
     index("account_user_id_idx").on(t.userId),
-  ]
+  ],
 );
 
 export const accountsRelations = relations(accounts, ({ one }) => ({
@@ -100,7 +101,7 @@ export const sessions = pgTable(
       .references(() => users.id),
     expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
   }),
-  (t) => [index("t_user_id_idx").on(t.userId)]
+  (t) => [index("t_user_id_idx").on(t.userId)],
 );
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -114,7 +115,7 @@ export const verificationTokens = pgTable(
     token: d.varchar({ length: 255 }).notNull(),
     expires: d.timestamp({ mode: "date", withTimezone: true }).notNull(),
   }),
-  (t) => [primaryKey({ columns: [t.identifier, t.token] })]
+  (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
 
 // Courses table
@@ -185,7 +186,7 @@ export const courseRequirements = pgTable(
   ],
 );
 
-// Terms Offered table
+// Terms Offered Tabzle
 export const termOffered = pgTable(
   "term_offered",
   {
