@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { env } from "../src/env";
+import { env } from "../../src/env";
 import { z } from "zod";
 
 const inputSchema = z.object({

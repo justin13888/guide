@@ -1,18 +1,18 @@
 services:
-  mysql:
-    image: mysql:9.3.0
-    container_name: mysql
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: guide
-      # MYSQL_USER: guide
-      # MYSQL_PASSWORD: guide
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: guide
+      # POSTGRES_USER: guide  # Uncomment if you want a specific user
+      # POSTGRES_PASSWORD: guide  # Uncomment if you want a specific user password
     ports:
-      - "3306:3306"
+      - "5432:5432" # PostgreSQL default port
     volumes:
-      - mysql_data:/var/lib/mysql
-      # - ./my.cnf:/etc/mysql/conf.d/custom.cnf # Optional: Custom MySQL configuration
+      - postgres_data:/var/lib/postgresql/data
+      # - ./postgresql.conf:/etc/postgresql/postgresql.conf  # Optional: Custom PostgreSQL configuration
 
 volumes:
-  mysql_data: # Defines the named volume for persistent storage
+  postgres_data: # Defines the named volume for persistent storage
