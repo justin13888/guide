@@ -5,7 +5,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-import { planSchema, type Plan } from "~/server/models";
+import { planSchema, type Plan } from "~/models";
 
 export const plannerRouter = createTRPCRouter({
   hello: publicProcedure

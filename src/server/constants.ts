@@ -1,4 +1,4 @@
-import type { ProgramRequirements } from "./models";
+import type { ProgramRequirements } from "~/models";
 
 // TODO: Make this dynamically fetched from DB in the future
 export const softwareEngineeringHonoursRequirement: ProgramRequirements = {
