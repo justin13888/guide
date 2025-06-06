@@ -7,6 +7,7 @@ import {
   boolean,
   primaryKey,
   index,
+  real,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import { type AdapterAccount } from "next-auth/adapters";
@@ -127,6 +128,7 @@ export const courses = pgTable(
     title: text("title"),
     description: text("description"),
     requirements: text("requirements"),
+    units: real("units"),
   },
   (table) => [primaryKey({ columns: [table.department, table.courseNumber] })],
 );
