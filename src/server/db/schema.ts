@@ -8,6 +8,7 @@ import {
   primaryKey,
   index,
   real,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import { type AdapterAccount } from "next-auth/adapters";
@@ -119,6 +120,16 @@ export const verificationTokens = pgTable(
   (t) => [primaryKey({ columns: [t.identifier, t.token] })],
 );
 
+// Define enums
+export const relationTypeEnum = pgEnum("relation_type", ["AND", "OR"]);
+export const requirementTypeEnum = pgEnum("requirement_type", [
+  "LEVEL",
+  "PROGRAM",
+  "FACULTY",
+]);
+
+// -------------- Course tables --------------
+
 // Courses table
 export const courses = pgTable(
   "courses",
@@ -140,10 +151,9 @@ export const courseRequirementGroups = pgTable(
     id: serial("id").primaryKey(),
     department: varchar("department", { length: 10 }).notNull(),
     courseNumber: varchar("course_number", { length: 10 }).notNull(),
-    outerRelationType: varchar("outer_relation_type", { length: 3 }).notNull(),
+    outerRelationType: relationTypeEnum("outer_relation_type").notNull(),
   },
   (table) => [
-    sql`CHECK (${table.outerRelationType} IN ('AND', 'OR'))`,
     primaryKey({ columns: [table.id] }),
     {
       foreignKeys: [
@@ -169,13 +179,12 @@ export const courseRequirements = pgTable(
     relatedCourseNumber: varchar("related_course_number", {
       length: 10,
     }).notNull(),
-    innerRelationType: varchar("inner_relation_type", { length: 3 }).notNull(),
+    innerRelationType: relationTypeEnum("inner_relation_type").notNull(),
     minGrade: integer("min_grade"),
     isAntireq: boolean("is_antireq").notNull().default(false),
     isCoreq: boolean("is_coreq").notNull().default(false),
   },
   (table) => [
-    sql`CHECK (${table.innerRelationType} IN ('AND', 'OR'))`,
     {
       foreignKeys: [
         {
@@ -219,11 +228,10 @@ export const courseRestrictions = pgTable(
     id: serial("id").primaryKey(),
     department: varchar("department", { length: 10 }).notNull(),
     courseNumber: varchar("course_number", { length: 10 }).notNull(),
-    requirementType: varchar("requirement_type", { length: 10 }).notNull(),
+    requirementType: requirementTypeEnum("requirement_type").notNull(),
     value: text("value").notNull(),
   },
   (table) => [
-    sql`CHECK (${table.requirementType} IN ('LEVEL', 'PROGRAM', 'FACULTY'))`,
     {
       foreignKeys: [
         {
