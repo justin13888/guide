@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseRequirementsDescription } from "./parse-requirements";
 
 // Input type from API
 const apiCourseSchema = z.object({
@@ -57,22 +58,6 @@ type TransformedCourse = {
   }>;
 };
 
-// Helper function to parse requirements description
-function parseRequirementsDescription(description: string): {
-  groups: TransformedCourse["requirementGroups"];
-  restrictions: TransformedCourse["restrictions"];
-} {
-  // TODO: Implement parsing logic
-  // This will need to handle cases like:
-  // "Prereq: CS 241, 251; Antireq: CS 240; Coreq: CS 245"
-  // "Level at least 3A Computer Science"
-  // "Computer Science students only"
-  return {
-    groups: [],
-    restrictions: [],
-  };
-}
-
 // Helper function to determine term offerings
 function determineTermOfferings(courseId: string): {
   fall: boolean;
@@ -117,15 +102,23 @@ export function transformCourseData(
       title,
       description: description || null,
       requirements: requirementsDescription || null,
-      units: null, // TODO: Get from API response
+      units: 0.5, // Can't get units info from API, default to 0.5
     },
     termOffered: {
       department: subjectCode,
       courseNumber: catalogNumber,
       ...termOfferings,
     },
-    requirementGroups: groups,
-    restrictions,
+    requirementGroups: groups.map((g) => ({
+      ...g,
+      department: subjectCode,
+      courseNumber: catalogNumber,
+    })),
+    restrictions: restrictions.map((r) => ({
+      ...r,
+      department: subjectCode,
+      courseNumber: catalogNumber,
+    })),
   };
 }
 
