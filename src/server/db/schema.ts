@@ -142,7 +142,6 @@ export const courseRequirementGroups = pgTable(
   },
   (table) => [
     sql`CHECK (${table.outerRelationType} IN ('AND', 'OR'))`,
-    primaryKey({ columns: [table.id] }),
     {
       foreignKeys: [
         {
