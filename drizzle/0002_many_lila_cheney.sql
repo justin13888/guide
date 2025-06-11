@@ -1,0 +1,2 @@
+ALTER TABLE "course_program_restrictions" DROP CONSTRAINT "course_program_restrictions_department_course_number_program_min_level_pk";--> statement-breakpoint
+ALTER TABLE "course_program_restrictions" ADD CONSTRAINT "course_program_restrictions_department_course_number_program_pk" PRIMARY KEY("department","course_number","program");

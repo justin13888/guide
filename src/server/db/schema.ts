@@ -124,7 +124,7 @@ export const verificationTokens = pgTable(
 export const relationTypeEnum = pgEnum("relation_type", ["AND", "OR"]);
 export const restrictionTypeEnum = pgEnum("restriction_type", [
   "INCLUDE",
-  "EXCLUDE"
+  "EXCLUDE",
 ]);
 
 // -------------- Course tables --------------
@@ -139,6 +139,7 @@ export const courses = pgTable(
     description: text("description"),
     requirements: text("requirements"),
     units: real("units"),
+    minLevel: varchar("min_level", { length: 5 }),
 
     fall: boolean("fall").notNull().default(false),
     winter: boolean("winter").notNull().default(false),
@@ -210,35 +211,12 @@ export const courseProgramRestrictions = pgTable(
     department: varchar("department", { length: 10 }).notNull(),
     courseNumber: varchar("course_number", { length: 10 }).notNull(),
     program: varchar("program", { length: 50 }).notNull(),
+    minLevel: varchar("min_level", { length: 5 }),
     restrictionType: restrictionTypeEnum("restriction_type").notNull(),
   },
   (table) => [
     primaryKey({
       columns: [table.department, table.courseNumber, table.program],
-    }),
-    {
-      foreignKeys: [
-        {
-          columns: [table.department, table.courseNumber],
-          foreignColumns: [courses.department, courses.courseNumber],
-          onDelete: "cascade",
-        },
-      ],
-    },
-  ],
-);
-
-// course level
-export const courseLevelRequirements = pgTable(
-  "course_level_requirements",
-  {
-    department: varchar("department", { length: 10 }).notNull(),
-    courseNumber: varchar("course_number", { length: 10 }).notNull(),
-    level: varchar("level", { length: 5 }).notNull(),
-  },
-  (table) => [
-    primaryKey({
-      columns: [table.department, table.courseNumber, table.level],
     }),
     {
       foreignKeys: [

@@ -201,8 +201,7 @@ Root (AND)
 
 ### 4. Handle restrictions
 
-- **Level requirements**: "Level at least 2A" → store in separate `courseLevelRequirements` table
-- **Program restrictions**: "Honours Math students only" → store in separate `courseProgramRestrictions` table
+- **Program restrictions**: "Level at least 2A Honours Math students only" → store in `courseProgramRestrictions` table
 
 **Output**: Structured data ready for database insertion.
 
@@ -220,7 +219,6 @@ The data is inserted into the following tables:
 - **`prerequisiteNodes`**: Tree structure for prerequisite relationships
 - **`coursePrerequisites`**: Links courses to their prerequisite tree root
 - **`courseProgramRestrictions`**: Program-specific restrictions
-- **`courseLevelRequirements`**: Level requirements
 
 ### Insertion Strategy
 

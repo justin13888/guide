@@ -4,7 +4,6 @@ import {
   prerequisiteNodes,
   coursePrerequisites,
   courseProgramRestrictions,
-  courseLevelRequirements,
 } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 import {
@@ -24,6 +23,7 @@ export type TransformedCourse = {
     description: string | null;
     requirements: string | null;
     units: number | null;
+    minLevel: string | null;
     fall: boolean;
     winter: boolean;
     spring: boolean;
@@ -50,14 +50,8 @@ export type TransformedCourse = {
     department: string;
     courseNumber: string;
     program: string;
+    minLevel: string | null;
     restrictionType: "INCLUDE" | "EXCLUDE";
-  }>;
-
-  // For courseLevelRequirements table
-  levelRequirements: Array<{
-    department: string;
-    courseNumber: string;
-    level: string;
   }>;
 };
 
@@ -84,9 +78,8 @@ export function transformCourseData(
   const courseNumber = ensureNonNull(catalogNumber, "000");
 
   // Parse requirements and restrictions
-  const { groups, restrictions } = parseRequirementsDescription(
-    requirementsDescription,
-  );
+  const { groups, restrictions, programRestrictions, minLevel } =
+    parseRequirementsDescription(requirementsDescription);
 
   // Build prerequisite tree if there are requirements
   let prerequisiteNodes: Array<{
@@ -114,23 +107,14 @@ export function transformCourseData(
     };
   }
 
-  // Process restrictions
-  const programRestrictions = restrictions
-    .filter((r) => r.requirementType === "PROGRAM")
-    .map((r) => ({
-      department,
-      courseNumber,
-      program: r.value,
-      restrictionType: "INCLUDE" as const, // Default to INCLUDE for program restrictions
-    }));
-
-  const levelRequirements = restrictions
-    .filter((r) => r.requirementType === "LEVEL")
-    .map((r) => ({
-      department,
-      courseNumber,
-      level: r.value,
-    }));
+  // Process program restrictions from the parsed programRestrictions array
+  const transformedProgramRestrictions = programRestrictions.map((pr) => ({
+    department,
+    courseNumber,
+    program: pr.program,
+    minLevel: pr.level,
+    restrictionType: pr.restrictionType,
+  }));
 
   return {
     course: {
@@ -140,14 +124,14 @@ export function transformCourseData(
       description: description || null,
       requirements: requirementsDescription || null,
       units: 0.5, // Can't get units info from API, default to 0.5
+      minLevel,
       fall,
       winter,
       spring,
     },
     prerequisiteNodes,
     coursePrerequisites,
-    programRestrictions,
-    levelRequirements,
+    programRestrictions: transformedProgramRestrictions,
   };
 }
 
@@ -197,6 +181,7 @@ export async function insertCourseData(
             description: transformedCourse.course.description,
             requirements: transformedCourse.course.requirements,
             units: transformedCourse.course.units,
+            minLevel: transformedCourse.course.minLevel,
             fall: transformedCourse.course.fall,
             winter: transformedCourse.course.winter,
             spring: transformedCourse.course.spring,
@@ -240,14 +225,6 @@ export async function insertCourseData(
           .insert(courseProgramRestrictions)
           .values(transformedCourse.programRestrictions);
         insertedRestrictions += transformedCourse.programRestrictions.length;
-      }
-
-      // 5. Insert level requirements
-      if (transformedCourse.levelRequirements.length > 0) {
-        await tx
-          .insert(courseLevelRequirements)
-          .values(transformedCourse.levelRequirements);
-        insertedRestrictions += transformedCourse.levelRequirements.length;
       }
 
       return {
@@ -360,7 +337,6 @@ export async function clearExistingCourseData(): Promise<void> {
     await tx.delete(coursePrerequisites);
     await tx.delete(prerequisiteNodes);
     await tx.delete(courseProgramRestrictions);
-    await tx.delete(courseLevelRequirements);
     await tx.delete(courses);
   });
 

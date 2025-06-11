@@ -31,6 +31,12 @@ export interface ParsedRequirements {
     requirementType: RequirementType;
     value: string;
   }>;
+  programRestrictions: Array<{
+    program: string;
+    level: string | null;
+    restrictionType: "INCLUDE" | "EXCLUDE";
+  }>;
+  minLevel: string | null;
 }
 
 // Tree node structure for database insertion
@@ -61,12 +67,22 @@ export function parseRequirementsDescription(
   description: string | null,
 ): ParsedRequirements {
   if (!description) {
-    return { groups: [], restrictions: [] };
+    return {
+      groups: [],
+      restrictions: [],
+      programRestrictions: [],
+      minLevel: null,
+    };
   }
 
   const restrictions: Array<{
     requirementType: RequirementType;
     value: string;
+  }> = [];
+  const programRestrictions: Array<{
+    program: string;
+    level: string | null;
+    restrictionType: "INCLUDE" | "EXCLUDE";
   }> = [];
   const groups: Array<{
     outerRelationType: "AND" | "OR";
@@ -79,6 +95,10 @@ export function parseRequirementsDescription(
       isCoreq: boolean;
     }>;
   }> = [];
+
+  // Extract minLevel from the entire description
+  const levelMatch = description.match(/Level at least (\d[A-Z])/i);
+  const minLevel = levelMatch ? levelMatch[1]! : null;
 
   // 1. Split into sections by requirement types
   const sections = description.split(/\.\s*(?=Prereq:|Antireq:|Coreq:)/);
@@ -96,11 +116,15 @@ export function parseRequirementsDescription(
 
     if (!content) continue;
 
-    // 2. Parse restrictions (level, program, faculty)
+    // 2. Parse restrictions (faculty requirements only)
     const sectionRestrictions = parseRestrictions(content);
     restrictions.push(...sectionRestrictions);
 
-    // 3. Parse course requirements based on type
+    // 3. Parse program restrictions with levels
+    const sectionProgramRestrictions = parseProgramRestrictions(content);
+    programRestrictions.push(...sectionProgramRestrictions);
+
+    // 4. Parse course requirements based on type
     if (type === "Prereq") {
       const prereqGroups = parsePrerequisites(content);
       groups.push(...prereqGroups);
@@ -117,11 +141,11 @@ export function parseRequirementsDescription(
     }
   }
 
-  return { groups, restrictions };
+  return { groups, restrictions, programRestrictions, minLevel };
 }
 
 /**
- * Parse restrictions (level, program, faculty requirements)
+ * Parse restrictions (faculty requirements only - level and program are handled separately)
  */
 function parseRestrictions(content: string): Array<{
   requirementType: RequirementType;
@@ -131,32 +155,6 @@ function parseRestrictions(content: string): Array<{
     requirementType: RequirementType;
     value: string;
   }> = [];
-
-  // Parse level restrictions
-  const levelMatch = content.match(/Level at least (\d[A-Z])/i);
-  if (levelMatch) {
-    restrictions.push({
-      requirementType: "LEVEL",
-      value: levelMatch[1]!,
-    });
-  }
-
-  // Parse program restrictions
-  const programMatch = content.match(/([A-Za-z\s]+) students only/i);
-  if (programMatch && programMatch[1]) {
-    const programText = programMatch[1].trim();
-    // Split by "or" to handle multiple program options
-    const programs = programText.split(/\s+or\s+/i).map((p) => p.trim());
-
-    for (const program of programs) {
-      if (program) {
-        restrictions.push({
-          requirementType: "PROGRAM",
-          value: program,
-        });
-      }
-    }
-  }
 
   // Parse faculty restrictions
   const facultyMatch = content.match(/([A-Za-z\s]+) Faculty students only/i);
@@ -168,6 +166,137 @@ function parseRestrictions(content: string): Array<{
   }
 
   return restrictions;
+}
+
+/**
+ * Parse program restrictions with levels
+ */
+function parseProgramRestrictions(content: string): Array<{
+  program: string;
+  level: string | null;
+  restrictionType: "INCLUDE" | "EXCLUDE";
+}> {
+  const programRestrictions: Array<{
+    program: string;
+    level: string | null;
+    restrictionType: "INCLUDE" | "EXCLUDE";
+  }> = [];
+
+  // Parse level restrictions first
+  const levelMatch = content.match(/Level at least (\d[A-Z])/i);
+  const level = levelMatch ? levelMatch[1]! : null;
+
+  // Parse program restrictions - remove level text first
+  const contentWithoutLevel = content.replace(
+    /Level at least \d[A-Z]\s*/gi,
+    "",
+  );
+
+  // Split by semicolons and find the last section that contains "students"
+  const sections = contentWithoutLevel.split(";").map((s) => s.trim());
+
+  for (let i = sections.length - 1; i >= 0; i--) {
+    const section = sections[i];
+    if (section && section.toLowerCase().includes("students")) {
+      // Extract the part before "students"
+      const studentsMatch = section.match(/(.*?)\s+students(?:\s+only)?[.]?/i);
+      if (studentsMatch && studentsMatch[1]) {
+        const programText = studentsMatch[1].trim();
+
+        // Skip if this looks like course requirements (contains course patterns)
+        if (programText.match(/[A-Z]{2,4}\s+\d{3}[A-Z]?/)) {
+          continue;
+        }
+
+        let programs: string[] = [];
+        if (programText.includes(",")) {
+          // Comma-separated format
+          const commaParts = [];
+          let part = "";
+          let depth = 0;
+          for (let char of programText) {
+            if (char === "(") depth++;
+            if (char === ")") depth--;
+            if (char === "," && depth === 0) {
+              commaParts.push(part.trim());
+              part = "";
+            } else {
+              part += char;
+            }
+          }
+          if (part.trim()) commaParts.push(part.trim());
+          // Remove 'or ' prefix from the last part if present
+          if (commaParts.length > 1) {
+            const lastPart = commaParts[commaParts.length - 1];
+            if (lastPart && lastPart.toLowerCase().startsWith("or ")) {
+              commaParts[commaParts.length - 1] = lastPart.slice(3).trim();
+            }
+          }
+          programs = commaParts;
+        } else {
+          // No commas: split by ' and ' or ' or '
+          programs = programText
+            .split(/\s+(?:and|or)\s+/i)
+            .map((p) => p.trim())
+            .filter(Boolean);
+        }
+
+        // Further split any remaining parts that contain "or" (for cases like "A or B" within comma-separated lists)
+        const finalPrograms: string[] = [];
+        for (const program of programs) {
+          if (program.toLowerCase().includes(" or ")) {
+            // Split by "or" but be careful with parentheses
+            const orParts = [];
+            let part = "";
+            let depth = 0;
+            for (let char of program) {
+              if (char === "(") depth++;
+              if (char === ")") depth--;
+              if (
+                char === " " &&
+                depth === 0 &&
+                part.toLowerCase().endsWith(" or")
+              ) {
+                orParts.push(part.slice(0, -3).trim());
+                part = "";
+              } else {
+                part += char;
+              }
+            }
+            if (part.trim()) orParts.push(part.trim());
+
+            // If we found "or" splits, use them; otherwise keep the original
+            if (orParts.length > 1) {
+              finalPrograms.push(...orParts);
+            } else {
+              finalPrograms.push(program);
+            }
+          } else {
+            finalPrograms.push(program);
+          }
+        }
+
+        for (let i = 0; i < finalPrograms.length; i++) {
+          const program = finalPrograms[i];
+          if (program) {
+            programRestrictions.push({
+              program: program,
+              // Apply level only to the first program
+              level: i === 0 && programRestrictions.length === 0 ? level : null,
+              restrictionType: "INCLUDE",
+            });
+          }
+        }
+
+        // If we found program restrictions, break out of the loop
+        if (programRestrictions.length > 0) {
+          break;
+        }
+      }
+    }
+  }
+
+  return programRestrictions;
 }
 
 /**

@@ -168,6 +168,7 @@ Examples:
   pnpm run import-courses --clear            # Clear existing data and import all
   pnpm run import-courses --max-courses=10   # Import only 10 courses (for testing)
   pnpm run import-courses --batch-size=100   # Use larger batch size
+  pnpm run import-courses --save             # Save final transformed data to file
     `);
     return;
   }

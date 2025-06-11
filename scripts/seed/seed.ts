@@ -6,7 +6,6 @@ import {
   prerequisiteNodes,
   coursePrerequisites,
   courseProgramRestrictions,
-  courseLevelRequirements,
 } from "../../src/server/db/schema";
 
 // Database connection
@@ -23,7 +22,6 @@ async function cleanup() {
   await db.delete(coursePrerequisites);
   await db.delete(prerequisiteNodes);
   await db.delete(courseProgramRestrictions);
-  await db.delete(courseLevelRequirements);
   await db.delete(courses);
 
   console.log("✨ Cleanup completed");
