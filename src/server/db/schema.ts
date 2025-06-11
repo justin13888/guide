@@ -140,51 +140,34 @@ export const courses = pgTable(
     description: text("description"),
     requirements: text("requirements"),
     units: real("units"),
+
+    fall: boolean("fall").notNull().default(false),
+    winter: boolean("winter").notNull().default(false),
+    spring: boolean("spring").notNull().default(false),
   },
   (table) => [primaryKey({ columns: [table.department, table.courseNumber] })],
 );
 
-// Course Requirement Groups table
-export const courseRequirementGroups = pgTable(
-  "course_requirement_groups",
-  {
-    id: serial("id").primaryKey(),
-    department: varchar("department", { length: 10 }).notNull(),
-    courseNumber: varchar("course_number", { length: 10 }).notNull(),
-    outerRelationType: relationTypeEnum("outer_relation_type").notNull(),
-  },
-  (table) => [
-    sql`CHECK (${table.outerRelationType} IN ('AND', 'OR'))`,
-    {
-      foreignKeys: [
-        {
-          columns: [table.department, table.courseNumber],
-          foreignColumns: [courses.department, courses.courseNumber],
-          onDelete: "cascade",
-        },
-      ],
-    },
-  ],
-);
+// prereq tree
+const prerequisiteNodesIdRef = () => prerequisiteNodes.id;
 
-// Course Requirements table
-export const courseRequirements = pgTable(
-  "course_requirements",
+export const prerequisiteNodes = pgTable(
+  "prerequisite_nodes",
   {
     id: serial("id").primaryKey(),
-    groupId: integer("group_id")
-      .notNull()
-      .references(() => courseRequirementGroups.id, { onDelete: "cascade" }),
-    relatedDepartment: varchar("related_department", { length: 10 }).notNull(),
-    relatedCourseNumber: varchar("related_course_number", {
-      length: 10,
-    }).notNull(),
-    innerRelationType: relationTypeEnum("inner_relation_type").notNull(),
+
+    parentId: integer("parent_id").references(prerequisiteNodesIdRef, {
+      onDelete: "cascade",
+    }),
+
+    relationType: varchar("relation_type", { length: 3 }),
+
+    relatedDepartment: varchar("related_department", { length: 10 }),
+    relatedCourseNumber: varchar("related_course_number", { length: 10 }),
     minGrade: integer("min_grade"),
-    isAntireq: boolean("is_antireq").notNull().default(false),
-    isCoreq: boolean("is_coreq").notNull().default(false),
   },
   (table) => [
+    sql`CHECK (${table.relationType} IS NULL OR ${table.relationType} IN ('AND', 'OR'))`,
     {
       foreignKeys: [
         {
@@ -197,15 +180,16 @@ export const courseRequirements = pgTable(
   ],
 );
 
-// Terms Offered Tabzle
-export const termOffered = pgTable(
-  "term_offered",
+// course prereq
+export const coursePrerequisites = pgTable(
+  "course_prerequisites",
   {
     department: varchar("department", { length: 10 }).notNull(),
     courseNumber: varchar("course_number", { length: 10 }).notNull(),
-    fall: boolean().notNull().default(false),
-    winter: boolean().notNull().default(false),
-    spring: boolean().notNull().default(false),
+
+    rootNodeId: integer("root_node_id")
+      .notNull()
+      .references(() => prerequisiteNodes.id, { onDelete: "cascade" }),
   },
   (table) => [
     primaryKey({ columns: [table.department, table.courseNumber] }),
@@ -221,17 +205,44 @@ export const termOffered = pgTable(
   ],
 );
 
-// Course Restrictions table
-export const courseRestrictions = pgTable(
-  "course_restrictions",
+// course program
+export const courseProgramRestrictions = pgTable(
+  "course_program_restrictions",
   {
-    id: serial("id").primaryKey(),
     department: varchar("department", { length: 10 }).notNull(),
     courseNumber: varchar("course_number", { length: 10 }).notNull(),
-    requirementType: requirementTypeEnum("requirement_type").notNull(),
-    value: text("value").notNull(),
+    program: varchar("program", { length: 50 }).notNull(),
+    restrictionType: varchar("restriction_type", { length: 7 }).notNull(),
   },
   (table) => [
+    primaryKey({
+      columns: [table.department, table.courseNumber, table.program],
+    }),
+    {
+      foreignKeys: [
+        {
+          columns: [table.department, table.courseNumber],
+          foreignColumns: [courses.department, courses.courseNumber],
+          onDelete: "cascade",
+        },
+      ],
+    },
+    sql`CHECK (${table.restrictionType} IN ('INCLUDE', 'EXCLUDE'))`,
+  ],
+);
+
+// course level
+export const courseLevelRequirements = pgTable(
+  "course_level_requirements",
+  {
+    department: varchar("department", { length: 10 }).notNull(),
+    courseNumber: varchar("course_number", { length: 10 }).notNull(),
+    level: varchar("level", { length: 5 }).notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.department, table.courseNumber, table.level],
+    }),
     {
       foreignKeys: [
         {
