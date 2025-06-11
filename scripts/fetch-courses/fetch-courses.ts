@@ -2,6 +2,9 @@ import "dotenv/config";
 import { env } from "../../src/env";
 import { z } from "zod";
 import { transformCourseDataBatch } from "./transform";
+import { writeFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
 // Term mapping for the current academic year
 const TERM_MAPPING = {
@@ -160,12 +163,12 @@ async function fetchCourses(input: z.infer<typeof inputSchema>) {
   const transformedData = transformCourseDataBatch(processedCourses).map(
     (course) => {
       const offering = courseOfferings.get(
-        course.course.courseId.toLowerCase(),
+        `${course.course.department}${course.course.courseNumber}`.toLowerCase(),
       );
       return {
         ...course,
-        termOffered: {
-          ...course.termOffered,
+        course: {
+          ...course.course,
           fall: offering?.offerings.fall ?? false,
           winter: offering?.offerings.winter ?? false,
           spring: offering?.offerings.spring ?? false,
@@ -183,9 +186,7 @@ async function fetchCourses(input: z.infer<typeof inputSchema>) {
   // Filter out courses that aren't offered in any term
   const offeredCourses = undergradCourses.filter(
     (course) =>
-      course.termOffered.fall ||
-      course.termOffered.winter ||
-      course.termOffered.spring,
+      course.course.fall || course.course.winter || course.course.spring,
   );
 
   return offeredCourses;
@@ -201,7 +202,13 @@ const input = inputSchema.parse({ term });
 // Execute the fetch
 fetchCourses(input)
   .then((courses) => {
-    console.log(JSON.stringify(courses, null, 2));
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const outputPath = join(__dirname, `courses-${input.term}.json`);
+    writeFileSync(outputPath, JSON.stringify(courses, null, 2));
+    console.log(
+      `Successfully fetched ${courses.length} courses and saved to ${outputPath}`,
+    );
   })
   .catch((error) => {
     console.error("Error fetching courses:", error);
