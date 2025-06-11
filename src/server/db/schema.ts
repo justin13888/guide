@@ -11,7 +11,7 @@ import {
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
-import { type AdapterAccount } from "next-auth/adapters";
+import type { AdapterAccount } from "@auth/core/adapters";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -122,10 +122,9 @@ export const verificationTokens = pgTable(
 
 // Define enums
 export const relationTypeEnum = pgEnum("relation_type", ["AND", "OR"]);
-export const requirementTypeEnum = pgEnum("requirement_type", [
-  "LEVEL",
-  "PROGRAM",
-  "FACULTY",
+export const restrictionTypeEnum = pgEnum("restriction_type", [
+  "INCLUDE",
+  "EXCLUDE"
 ]);
 
 // -------------- Course tables --------------
@@ -160,18 +159,17 @@ export const prerequisiteNodes = pgTable(
       onDelete: "cascade",
     }),
 
-    relationType: varchar("relation_type", { length: 3 }),
+    relationType: relationTypeEnum("relation_type"),
 
-    relatedDepartment: varchar("related_department", { length: 10 }),
-    relatedCourseNumber: varchar("related_course_number", { length: 10 }),
+    department: varchar("department", { length: 10 }),
+    courseNumber: varchar("course_number", { length: 10 }),
     minGrade: integer("min_grade"),
   },
   (table) => [
-    sql`CHECK (${table.relationType} IS NULL OR ${table.relationType} IN ('AND', 'OR'))`,
     {
       foreignKeys: [
         {
-          columns: [table.relatedDepartment, table.relatedCourseNumber],
+          columns: [table.department, table.courseNumber],
           foreignColumns: [courses.department, courses.courseNumber],
           onDelete: "cascade",
         },
@@ -212,7 +210,7 @@ export const courseProgramRestrictions = pgTable(
     department: varchar("department", { length: 10 }).notNull(),
     courseNumber: varchar("course_number", { length: 10 }).notNull(),
     program: varchar("program", { length: 50 }).notNull(),
-    restrictionType: varchar("restriction_type", { length: 7 }).notNull(),
+    restrictionType: restrictionTypeEnum("restriction_type").notNull(),
   },
   (table) => [
     primaryKey({
@@ -227,7 +225,6 @@ export const courseProgramRestrictions = pgTable(
         },
       ],
     },
-    sql`CHECK (${table.restrictionType} IN ('INCLUDE', 'EXCLUDE'))`,
   ],
 );
 
