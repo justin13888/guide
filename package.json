@@ -18,7 +18,7 @@
     "preview": "next build && next start",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "fetch-courses": "tsx scripts/fetch-courses/fetch-courses.ts",
+    "import-courses": "tsx scripts/import-courses/main.ts",
     "seed": "tsx scripts/seed/seed.ts"
   },
   "dependencies": {
