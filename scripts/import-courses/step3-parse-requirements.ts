@@ -144,10 +144,18 @@ function parseRestrictions(content: string): Array<{
   // Parse program restrictions
   const programMatch = content.match(/([A-Za-z\s]+) students only/i);
   if (programMatch && programMatch[1]) {
-    restrictions.push({
-      requirementType: "PROGRAM",
-      value: programMatch[1].trim(),
-    });
+    const programText = programMatch[1].trim();
+    // Split by "or" to handle multiple program options
+    const programs = programText.split(/\s+or\s+/i).map((p) => p.trim());
+
+    for (const program of programs) {
+      if (program) {
+        restrictions.push({
+          requirementType: "PROGRAM",
+          value: program,
+        });
+      }
+    }
   }
 
   // Parse faculty restrictions
