@@ -229,3 +229,82 @@ export const courseProgramRestrictions = pgTable(
     },
   ],
 );
+
+export const antirequisites = pgTable(
+  "antirequisites",
+  {
+    department: varchar("department", { length: 10 }).notNull(),
+    courseNumber: varchar("course_number", { length: 10 }).notNull(),
+    antirequisiteDepartment: varchar("antirequisite_department", {
+      length: 10,
+    }).notNull(),
+    antirequisiteCourseNumber: varchar("antirequisite_course_number", {
+      length: 10,
+    }).notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.department,
+        table.courseNumber,
+        table.antirequisiteDepartment,
+        table.antirequisiteCourseNumber,
+      ],
+    }),
+    {
+      foreignKeys: [
+        {
+          columns: [table.department, table.courseNumber],
+          foreignColumns: [courses.department, courses.courseNumber],
+          onDelete: "cascade",
+        },
+        {
+          columns: [
+            table.antirequisiteDepartment,
+            table.antirequisiteCourseNumber,
+          ],
+          foreignColumns: [courses.department, courses.courseNumber],
+          onDelete: "cascade",
+        },
+      ],
+    },
+  ],
+);
+
+export const corequisites = pgTable(
+  "corequisites",
+  {
+    department: varchar("department", { length: 10 }).notNull(),
+    courseNumber: varchar("course_number", { length: 10 }).notNull(),
+    corequisiteDepartment: varchar("corequisite_department", {
+      length: 10,
+    }).notNull(),
+    corequisiteCourseNumber: varchar("corequisite_course_number", {
+      length: 10,
+    }).notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.department,
+        table.courseNumber,
+        table.corequisiteDepartment,
+        table.corequisiteCourseNumber,
+      ],
+    }),
+    {
+      foreignKeys: [
+        {
+          columns: [table.department, table.courseNumber],
+          foreignColumns: [courses.department, courses.courseNumber],
+          onDelete: "cascade",
+        },
+        {
+          columns: [table.corequisiteDepartment, table.corequisiteCourseNumber],
+          foreignColumns: [courses.department, courses.courseNumber],
+          onDelete: "cascade",
+        },
+      ],
+    },
+  ],
+);
