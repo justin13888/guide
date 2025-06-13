@@ -1,6 +1,6 @@
 'use client'
 import { Search } from '@geist-ui/icons'
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type ButtonStyles = {
     active: string;
@@ -18,50 +18,20 @@ type Course = {
     requirements: string[];
 };
 
+// TODO: Display more course information in the sidebar
+// TODO: Separate requirements using 'and'
+
+// RUN: docker compose up
+//      pnpm run db:push
+//      pnpm seed
+
 export default function SideBar() {
     const [search, setSearch] = useState<string>('');
     const [isOpen, setIsOpen] = useState(false);
-    const [options, setOptions] = useState<string[]>(['CS 135', 'SE 212', 'STAT 231', 'ECE 350', 'PSYCH 207', 'ECON 101']);
+    const [options, setOptions] = useState<string[]>([]);
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [activeOption, setActiveOption] = useState<string>('');
-    const [courses, setCourses] = useState<Course[]>([
-        {
-            name: 'Designing Functional Programs',
-            code: 'CS 135',
-            description: 'An introduction to the fundamentals of computer science through the application of elementary programming patterns in the functional style of programming. Syntax and semantics of a functional programming language. Tracing via substitution. Design, testing, and documentation. Linear and nonlinear data structures. Recursive data definitions. Abstraction and encapsulation. Generative and structural recursion. Historical context.',
-            requirements: []
-        },
-        {
-            name: 'Real-Time Operating Systems',
-            code: 'ECE 350',
-            description: 'Memory and virtual memory and caching; I/O devices, drivers, and permanent storage management; process scheduling; queue management in the kernel; real-time kernel development. Aspects of multi-core operating systems.',
-            requirements: ['ECE 252', 'Level at least 3A BASc/BSE']
-        },
-        {
-            name: 'Statistics',
-            code: 'STAT 231',
-            description: 'This course provides a systematic approach to empirical problem solving which will enable students to critically assess the sampling protocol and conclusions of an empirical study including the possible sources of error in the study and whether evidence of a causal relationship can be reasonably concluded. The connection between the attributes of a population and the parameters in the named distributions covered in STAT230 will be emphasized. Numerical and graphical techniques for summarizing data and checking the fit of a statistical model will be discussed. The method of maximum likelihood will be used to obtain point and interval estimates for the parameters of interest as well as testing hypotheses. The interpretation of confidence intervals and p-values will be emphasized. The Chi-squared and t distributions will be introduced and used to construct confidence intervals and tests of hypotheses including likelihood ratio tests. Contingency tables and Gaussian response models including the two sample Gaussian and simple linear regression will be used as examples.',
-            requirements: ['(One of MATH 118, MATH 119, MATH 128, MATH 138, MATH 148) and (STAT 220 with a grade of at least 70% or STAT 230 or STAT 240)', 'Honours Math or Math/Phys students']
-        },
-        {
-            name: 'Logic and Computation',
-            code: 'SE 212',
-            description: 'Formal logic. Proof systems and styles. Rudimentary model theory. Formal models of computation. Logic-based specification. Correctness proofs. Applications in software engineering.',
-            requirements: ['CS 138 and MATH 135']
-        },
-        {
-            name: 'Cognitive Processes',
-            code: 'PSYCH 207',
-            description: 'An examination and evaluation of selected topics dealing with human information processing such as attention, memory, pattern recognition, consciousness, language, dyslexia, decision making, and problem solving.',
-            requirements: ['Level at least 1B']
-        },
-        {
-            name: 'Introduction to Microeconomics',
-            code: 'ECON 101',
-            description: 'Basic principles of microeconomics, including supply and demand, market equilibrium, and consumer and producer behavior.',
-            requirements: []
-        },
-    ]);
+    const [courses, setCourses] = useState<Course[]>([]);
     
     const buttonStyles: ColorMapping = {
         'CS': {
@@ -85,6 +55,27 @@ export default function SideBar() {
             inactive: 'border-orange-400 hover:bg-orange-50 text-orange-600'
         }
     } as const;
+
+    useEffect(() => {
+        async function fetchCourses() {
+          try {
+            const response = await fetch('/api/courses');
+            const data = await response.json();
+            const transformedCourses = data.map((course: any) => ({
+              name: course.title || '',
+              code: `${course.department} ${course.courseNumber}`,
+              description: course.description || '',
+              requirements: course.requirements ? [course.requirements] : []
+            }));
+            const courseCodes = transformedCourses.map((course: Course) => course.code);
+            setOptions(courseCodes);
+            setCourses(transformedCourses);
+          } catch (error) {
+            console.error('Error fetching courses:', error);
+          }
+        }
+        fetchCourses();
+      }, []);
 
     const defaultStyles: ButtonStyles = {
         active: 'bg-gray-100 border-gray-400 text-gray-700',
@@ -117,22 +108,38 @@ export default function SideBar() {
                     <Search className="absolute left-3 top-2.5" size={20} stroke="#D1D5DB" />
                     {search.length > 0 && isOpen && (
                         <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-400 rounded-lg">
-                            {options.slice(0, 5).map((option) => (
-                                <div 
-                                    key={option} 
-                                    className="py-2 px-4 hover:bg-gray-50 cursor-pointer first:rounded-t-lg last:rounded-b-lg"
-                                    onMouseDown={(e) => {
-                                        e.preventDefault();
-                                        if (!selectedOptions.includes(option)) {
-                                            setSelectedOptions([...selectedOptions, option]);
-                                        }
-                                        setSearch('');
-                                        setIsOpen(false);
-                                    }}
-                                >
-                                    {option}
-                                </div>
-                            ))}
+                            {options
+                                .filter(option => 
+                                    option.toLowerCase().includes(search.toLowerCase())
+                                )
+                                .slice(0, 5)
+                                .length > 0 ? (
+                                    options
+                                        .filter(option => 
+                                            option.toLowerCase().includes(search.toLowerCase())
+                                        )
+                                        .slice(0, 5)
+                                        .map((option) => (
+                                            <div 
+                                                key={option} 
+                                                className="py-2 px-4 hover:bg-gray-50 cursor-pointer first:rounded-t-lg last:rounded-b-lg"
+                                                onMouseDown={(e) => {
+                                                    e.preventDefault();
+                                                    if (!selectedOptions.includes(option)) {
+                                                        setSelectedOptions([...selectedOptions, option]);
+                                                    }
+                                                    setSearch('');
+                                                    setIsOpen(false);
+                                                }}
+                                            >
+                                                {option}
+                                            </div>
+                                        ))
+                                ) : (
+                                    <div className="py-2 px-4 text-gray-500 first:rounded-t-lg last:rounded-b-lg">
+                                        No courses found matching "{search}"
+                                    </div>
+                                )}
                         </div>
                     )}
                 </div>
