@@ -19,8 +19,12 @@ docker compose up
 # Initialize Drizzle schema
 pnpm run db:push
 
-# Fetch course data
-pnpm fetch-courses
+# Populate the database with course data (choose one option):
+# Option 1: Seed with sample data (small set of example courses for development)
+pnpm seed
+# OR
+# Option 2: (Work in progress) Import real course data from UWaterloo API (comprehensive dataset)
+pnpm import-courses --clear
 
 # Start dev server
 pnpm dev
