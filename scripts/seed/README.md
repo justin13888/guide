@@ -5,6 +5,8 @@ using a tree-based structure. It demonstrates the following:
 
 **⚠️ Warning**: This script will clear all existing data in the database before inserting new sample data.
 
+This script inserts course data for STAT 231, CS 341, MATH 235, and CS 115. The structure is explained below with STAT 231 as the example
+
 ## Features
 
 1. **Course Data**: Inserts STAT 231 and its prerequisite courses (MATH 118-148, STAT 220, 230, 240)
