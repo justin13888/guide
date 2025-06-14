@@ -2,6 +2,7 @@
 import { Search } from '@geist-ui/icons'
 import { useEffect, useState } from 'react';
 
+
 type ButtonStyles = {
     active: string;
     inactive: string;
@@ -88,8 +89,8 @@ export default function SideBar() {
     };
     
     return (
-        <div className="w-96 h-full bg-white border-l-2 border-b-2 border-gray-200 flex flex-col">
-            <div className="px-8 pt-8 pb-2">
+        <div className="w-[400px] h-full bg-white border-l-2 border-b-2 border-gray-200 flex flex-col">
+            <div className="px-[24px] pt-[24px] pb-2">
                 <div className="relative">
                     <input 
                         type="text" 

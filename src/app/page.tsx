@@ -4,7 +4,9 @@ import { LatestPost } from "~/app/_components/post";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
+
 import SideBar from "~/app/_components/sidebar";
+import Planner from "~/app/_components/planner";
 
 export default async function Home() {
   const hello = await api.planner.hello({ text: "from f" });
@@ -17,10 +19,7 @@ export default async function Home() {
   return (
     <div className="flex min-h-full absolute inset-0">
       <div className="flex-1">
-        {/* Main content area */}
-        <p>
-          {hello.greeting} <br />
-        </p>
+        <Planner/>
       </div>
       <SideBar />
     </div>

@@ -7,14 +7,14 @@ export default async function NavBar() {
 
 
     return (
-        <nav className="bg-white w-full h-20 px-8 flex items-center justify-between border-b-2 border-gray-200">
-            <div className="text-xl font-semibold">
+        <nav className="bg-white w-full h-[60px] px-8 flex items-center justify-between border-b-2 border-gray-200">
+            <div className="text-l font-semibold">
                 UWGuide
             </div>
             <div className="border border-gray-300 rounded-full p-2">
-                <User size={24} fill="#E5E7EB" stroke="#E5E7EB" />
+                <User size={12} fill="#E5E7EB" stroke="#E5E7EB" />
             </div>
-            <div className="flex flex-col items-center justify-center gap-4">
+            {/* <div className="flex flex-col items-center justify-center gap-4">
             <p className="text-center text-2xl text-white">
                 {session && <span>Logged in as {session.user?.name}</span>}
             </p>
@@ -24,7 +24,7 @@ export default async function NavBar() {
             >
                 {session ? "Sign out" : "Sign in"}
             </Link>
-            </div>
+            </div> */}
             {/* TODO: Style ^^ oops */}
         </nav>
     )
