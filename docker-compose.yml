@@ -9,10 +9,9 @@ services:
       # POSTGRES_USER: guide  # Uncomment if you want a specific user
       # POSTGRES_PASSWORD: guide  # Uncomment if you want a specific user password
     ports:
-      - "5432:5432" # PostgreSQL default port
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      # - ./postgresql.conf:/etc/postgresql/postgresql.conf  # Optional: Custom PostgreSQL configuration
-
+  
 volumes:
-  postgres_data: # Defines the named volume for persistent storage
+  postgres_data:
