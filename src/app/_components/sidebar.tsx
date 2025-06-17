@@ -17,14 +17,54 @@ type Course = {
     code: string;
     description: string;
     requirements: string[];
+    postrequisites?: string[];
+};
+
+type PostRequisite = {
+    postreq_course_num: string;
+    postreq_department: string;
+}
+
+type CoursesState = {
+    [key: string]: Course;
 };
 
 // TODO: Display more course information in the sidebar
+// TODO: Add filters or advanced searching
 // TODO: Separate requirements using 'and'
 
 // RUN: docker compose up
 //      pnpm run db:push
 //      pnpm seed
+//      pnpm run dev
+
+const buttonStyles: ColorMapping = {
+    'CS': {
+        active: 'bg-red-100 border-red-400 text-red-700',
+        inactive: 'border-red-400 hover:bg-red-50 text-red-600'
+    },
+    'MATH': {
+        active: 'bg-blue-100 border-blue-400 text-blue-700',
+        inactive: 'border-blue-400 hover:bg-blue-50 text-blue-600'
+    },
+    'ECE': {
+        active: 'bg-green-100 border-green-400 text-green-700',
+        inactive: 'border-green-400 hover:bg-green-50 text-green-600'
+    },
+    'PSYCH': {
+        active: 'bg-purple-100 border-purple-400 text-purple-700',
+        inactive: 'border-purple-400 hover:bg-purple-50 text-purple-600'
+    },
+    'ECON': {
+        active: 'bg-orange-100 border-orange-400 text-orange-700',
+        inactive: 'border-orange-400 hover:bg-orange-50 text-orange-600'
+    }
+} as const;
+
+const defaultStyles: ButtonStyles = {
+    active: 'bg-gray-100 border-gray-400 text-gray-700',
+    inactive: 'border-gray-400 hover:bg-gray-50 text-gray-600'
+};
 
 export default function SideBar() {
     const [search, setSearch] = useState<string>('');
@@ -32,43 +72,24 @@ export default function SideBar() {
     const [options, setOptions] = useState<string[]>([]);
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [activeOption, setActiveOption] = useState<string>('');
-    const [courses, setCourses] = useState<Course[]>([]);
+    const [courses, setCourses] = useState<CoursesState>({});
     
-    const buttonStyles: ColorMapping = {
-        'CS': {
-            active: 'bg-red-100 border-red-400 text-red-700',
-            inactive: 'border-red-400 hover:bg-red-50 text-red-600'
-        },
-        'MATH': {
-            active: 'bg-blue-100 border-blue-400 text-blue-700',
-            inactive: 'border-blue-400 hover:bg-blue-50 text-blue-600'
-        },
-        'ECE': {
-            active: 'bg-green-100 border-green-400 text-green-700',
-            inactive: 'border-green-400 hover:bg-green-50 text-green-600'
-        },
-        'PSYCH': {
-            active: 'bg-purple-100 border-purple-400 text-purple-700',
-            inactive: 'border-purple-400 hover:bg-purple-50 text-purple-600'
-        },
-        'ECON': {
-            active: 'bg-orange-100 border-orange-400 text-orange-700',
-            inactive: 'border-orange-400 hover:bg-orange-50 text-orange-600'
-        }
-    } as const;
-
     useEffect(() => {
         async function fetchCourses() {
           try {
             const response = await fetch('/api/courses');
             const data = await response.json();
-            const transformedCourses = data.map((course: any) => ({
-              name: course.title || '',
-              code: `${course.department} ${course.courseNumber}`,
-              description: course.description || '',
-              requirements: course.requirements ? [course.requirements] : []
-            }));
-            const courseCodes = transformedCourses.map((course: Course) => course.code);
+            const transformedCourses: CoursesState = {};
+            data.forEach((course: any) => {
+              const code = `${course.department} ${course.course_number}`;
+              transformedCourses[code] = {
+                name: '',
+                code: code,
+                description: '',
+                requirements: [],
+              };
+            });
+            const courseCodes = Object.keys(transformedCourses);
             setOptions(courseCodes);
             setCourses(transformedCourses);
           } catch (error) {
@@ -78,16 +99,35 @@ export default function SideBar() {
         fetchCourses();
       }, []);
 
-    const defaultStyles: ButtonStyles = {
-        active: 'bg-gray-100 border-gray-400 text-gray-700',
-        inactive: 'border-gray-400 hover:bg-gray-50 text-gray-600'
-    };
-
     const getButtonStyles = (option: string): ButtonStyles => {
         const [prefix = ''] = option.split(' ');
         return buttonStyles[prefix as keyof typeof buttonStyles] || defaultStyles;
     };
     
+    const fetchCourseDetails = async (option: string) => {
+        if (courses[option]?.description) {
+            return;
+        }
+
+        const [department, courseNumber] = option.split(' ');
+        const response = await fetch(`/api/courses/${department}-${courseNumber}`);
+        const data = await response.json();
+        
+        const response2 = await fetch(`/api/courses/postrequisites/${department}-${courseNumber}`);
+        const data2 = await response2.json();
+
+        setCourses(prev => ({
+            ...prev,
+            [option]: {
+                code: option,
+                name: data.title || '',
+                description: data.description || '',
+                requirements: data.requirements ? data.requirements.split(';').map((req: string) => req.trim()) : [],
+                postrequisites: data2.data.map((course: PostRequisite) => `${course.postreq_department} ${course.postreq_course_num}`)
+            }
+        }));
+    }
+
     return (
         <div className="w-[400px] h-full bg-white border-l-2 border-b-2 border-gray-200 flex flex-col">
             <div className="px-[24px] pt-[24px] pb-2">
@@ -154,6 +194,7 @@ export default function SideBar() {
                                     activeOption === option ? styles.active : styles.inactive
                                 }`}
                                 onClick={() => {
+                                    fetchCourseDetails(option);
                                     setActiveOption(activeOption === option ? '' : option);
                                 }}
                             >
@@ -168,7 +209,7 @@ export default function SideBar() {
                 {activeOption && (
                     <div className="py-4">
                         {(() => {
-                            const course = courses.find(course => course.code === activeOption);
+                            const course = courses[activeOption];
                             if (course) {
                                 return (
                                     <>
@@ -189,6 +230,16 @@ export default function SideBar() {
                                                 <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
                                                     {course.requirements.map((req, index) => (
                                                         <li key={index}>{req}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                        {course.postrequisites && course.postrequisites.length > 0 && (
+                                            <div className="mt-3">
+                                                <h4 className="font-medium text-sm text-gray-700">Leads to:</h4>
+                                                <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
+                                                    {course.postrequisites.map((postreq, index) => (
+                                                        <li key={index}>{postreq}</li>
                                                     ))}
                                                 </ul>
                                             </div>

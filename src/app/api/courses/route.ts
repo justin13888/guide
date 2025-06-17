@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { db } from '~/server/db';
-import { courses } from '~/server/db/schema';
 
+// Get full list of courses
 export async function GET() {
   try {
-    const result = await db.select().from(courses);
+    const result = await db.execute('SELECT department, course_number FROM courses');
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching courses:', error);
-    return NextResponse.json({ error: 'Failed to fetch courses' }, { status: 500 });
+    console.error('Error fetching course list:', error);
+    return NextResponse.json({ error: 'Failed to fetch course list' }, { status: 500 });
   }
 } 
