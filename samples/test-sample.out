@@ -1,0 +1,78 @@
+--> Basic Feature 1 Output
+
+department                  course_number
+-------------------------------------------
+STAT                        231
+STAT                        220
+STAT                        230
+STAT                        240
+STAT                        221
+STAT                        241
+MATH                        118
+MATH                        119
+MATH                        128
+MATH                        138
+MATH                        148
+CS                          341
+CS                          240
+CS                          240E
+CS                          241E
+CS                          241E
+CS                          246
+CS                          246E
+CS                          251
+CS                          251E
+ECE                         222
+CS                          231
+ECE                         406
+MATH                        235
+MATH                        106
+MATH                        114
+MATH                        115
+MATH                        136
+MATH                        146
+MATH                        225
+MATH                        245
+CS                          115
+BME                         121
+CS                          135
+CS                          137
+CS                          138
+CS                          145
+CHE                         121
+CIVE                        121
+ECE                         150
+GENE                        121
+MTE                         121
+ME                          101
+NE                          111
+MSE                         121
+PHYS                        139
+SYDE                        121
+
+--> Basic Feature 2 Output
+
+title
+--------------
+Statistics
+
+description
+--------------
+An introduction to statistical methods and their applications. Topics include probability, random variables, sampling distributions, estimation, hypothesis testing, and regression analysis.
+
+requirements
+--------------
+(One of MATH 118, MATH 119, MATH 128, MATH 138, MATH 148) and (STAT 220 with a grade of at least 70% or STAT 230 or STAT 240); Honours Math or Math/Phys students.
+
+--> Basic Feature 3 Output
+
+department                  course_number
+-------------------------------------------
+STAT                        231
+
+--> Basic Feature 4 Output
+
+department                  course_number           title
+------------------------------------------------------------------
+STAT			            221			          	Applied Statistics
+STAT			            241			        	Applied Statistics II
