@@ -18,8 +18,8 @@ export async function GET(
 
     const postrequisites = await db.execute(
       `SELECT 
-        cp.course_number AS postreq_course_num,
-        cp.department AS postreq_department
+        cp.course_number AS course_number,
+        cp.department AS department
       FROM course_prerequisites AS cp
       JOIN prerequisite_nodes AS pn ON cp.root_node_id = pn.parent_id
       JOIN prerequisite_nodes AS pn2 ON pn.id = pn2.parent_id

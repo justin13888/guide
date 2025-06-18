@@ -18,11 +18,18 @@ type Course = {
     description: string;
     requirements: string[];
     postrequisites?: string[];
+    antirequisites?: string[];
 };
 
 type PostRequisite = {
-    postreq_course_num: string;
-    postreq_department: string;
+    course_number: string;
+    department: string;
+}
+
+type AntiRequisite = {
+    department: string;
+    course_number: string;
+    title: string;
 }
 
 type CoursesState = {
@@ -32,6 +39,7 @@ type CoursesState = {
 // TODO: Display more course information in the sidebar
 // TODO: Add filters or advanced searching
 // TODO: Separate requirements using 'and'
+// TODO: Some kind of visual?
 
 // RUN: docker compose up
 //      pnpm run db:push
@@ -116,6 +124,9 @@ export default function SideBar() {
         const response2 = await fetch(`/api/courses/postrequisites/${department}-${courseNumber}`);
         const data2 = await response2.json();
 
+        const response3 = await fetch(`/api/courses/antirequisites/${department}-${courseNumber}`);
+        const data3 = await response3.json();
+
         setCourses(prev => ({
             ...prev,
             [option]: {
@@ -123,7 +134,8 @@ export default function SideBar() {
                 name: data.title || '',
                 description: data.description || '',
                 requirements: data.requirements ? data.requirements.split(';').map((req: string) => req.trim()) : [],
-                postrequisites: data2.data.map((course: PostRequisite) => `${course.postreq_department} ${course.postreq_course_num}`)
+                postrequisites: data2.data.map((course: PostRequisite) => `${course.department} ${course.course_number}`),
+                antirequisites: data3.data.map((course: AntiRequisite) => `${course.department} ${course.course_number} - ${course.title}`)
             }
         }));
     }
@@ -240,6 +252,16 @@ export default function SideBar() {
                                                 <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
                                                     {course.postrequisites.map((postreq, index) => (
                                                         <li key={index}>{postreq}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                        {course.antirequisites && course.antirequisites.length > 0 && (
+                                            <div className="mt-3">
+                                                <h4 className="font-medium text-sm text-gray-700">Antirequisites:</h4>
+                                                <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
+                                                    {course.antirequisites.map((antireq, index) => (
+                                                        <li key={index}>{antireq}</li>
                                                     ))}
                                                 </ul>
                                             </div>
