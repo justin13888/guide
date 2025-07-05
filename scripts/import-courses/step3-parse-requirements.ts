@@ -606,12 +606,12 @@ function parseCourseList(content: string): Array<{
     // Avoid duplicates
     if (
       !courses.some(
-        (c) => c.department === match[1]! && c.courseNumber === match[2]!,
+        (c) => c.department === match![1]! && c.courseNumber === match![2]!,
       )
     ) {
       courses.push({
-        department: match[1]!,
-        courseNumber: match[2]!,
+        department: match![1]!,
+        courseNumber: match![2]!,
         minGrade: null,
       });
     }
