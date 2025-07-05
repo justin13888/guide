@@ -1,21 +1,44 @@
 'use client'; // if using Next.js App Router
 
-import { Stage, Layer, Rect, Text, Group } from 'react-konva';
-import React from 'react';
+import { Stage, Layer, Rect, Text, Group, type KonvaNodeComponent } from 'react-konva';
+import React, { useEffect, useRef, useState } from 'react';
+import type Konva from 'konva';
 
 function TermBlock({index, name} : {index : number, name : string}) {
+  const width = 120;
+  const height = 300;
+  const BORDER_WIDTH = 1;
+  const MARGIN = 12; 
+  const PADDING = 12;
+  const xPos = index*(width+MARGIN);
+
   return <Group>
-    <Rect fill="white" width={122} height={300} x={index*(122+12)} y={0}></Rect>
-    <Rect fill="white" width={120} height={298} x={index*(122+12)+1} y={1}></Rect>
+    <Rect fill={"#EDEDED"} width={width + BORDER_WIDTH*2} height={height + BORDER_WIDTH*2} x={xPos-BORDER_WIDTH} y={-BORDER_WIDTH}></Rect>
+    <Rect fill="white" width={width} height={height} x={xPos} y={0}></Rect>
+    <Text fontFamily='Geist' fontStyle='bold' text={name} x={xPos+PADDING} y={PADDING} />
   </Group>
 }
 
 function CourseBlock({x, y, name, color} : {x : number, y : number, name : string, color : string}){
-  return <Group draggable={true}>
-    <Rect x={x} y={y} width={100} height={32} fill={color} cornerRadius={5}/>
-    <Rect x={x+2} y={y+2} width={96} height={28} fill={"white"} cornerRadius={4}/>
+  const BORDER_WIDTH = 1.5;
+  const PADDING = 10;
 
-    {/* <Text x={x} y={y+10}  text={name} width={100} align="center"/> */}
+  const [width, setWidth] = useState(100);
+  const [height, setHeight] = useState(32);
+  const textRef = useRef<Konva.Text>(null);
+
+  useEffect(()=>{
+    if(textRef.current !== null) {
+      setWidth(textRef.current.getTextWidth() + PADDING*2);
+      setHeight(textRef.current.getTextHeight() + PADDING*2);
+    }
+  },[])
+
+  return <Group draggable={true}>
+    <Rect x={x-BORDER_WIDTH} y={y-BORDER_WIDTH} width={width+BORDER_WIDTH*2} height={height+BORDER_WIDTH*2} fill={color} cornerRadius={5}/>
+    <Rect x={x} y={y} width={width} height={height} fill={"white"} cornerRadius={4}/>
+
+    <Text  ref={textRef} x={x+PADDING} y={y+PADDING+1} fontFamily='Geist' text={name} />
   </Group>
 }
 
@@ -32,7 +55,12 @@ export default function Canvas({width, height} : {width : number, height : numbe
       </Layer>
       <Layer>
         <CourseBlock x={0} y={0} name='CS 240' color={"#45DEC4"}/>
-        <CourseBlock x={50} y={50} name='MATH 239' color={"#E93D82"}/>
+        <CourseBlock x={0} y={0} name='MATH 239' color={"#E93D82"}/>
+        <CourseBlock x={0} y={0} name='PSYCH 207' color={"#7928CA"}/>
+        <CourseBlock x={0} y={0} name='CO 250' color={"#3291FF"}/>
+        <CourseBlock x={0} y={0} name='ENGL 192' color={"#34C759"}/>
+        <CourseBlock x={0} y={0} name='ECE 105' color={"#F7B955"}/>
+        
       </Layer>
     </Stage>
   );
@@ -41,12 +69,16 @@ export default function Canvas({width, height} : {width : number, height : numbe
 // todo
 // center camera (do this on resize too)
   // add a button to do this?
+  // add a trash can
+  // adding courses with prereq chains
+  // courses should move to top layer when clicked
 
-// add text to term blocks
+// add text to term blocks DONE
   // add hover with block styling
+  // should expand by one on drop
   // add drag and drop functionality
 
-// style buttons correctly
-// add text to buttons and resize off of that
+// style buttons correctly DONE
+// add text to buttons and resize off of that DONE
 
 // fix sidebar
