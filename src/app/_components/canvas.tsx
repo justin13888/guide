@@ -1,11 +1,13 @@
 'use client'; // if using Next.js App Router
 
-import { Stage, Layer, Rect, Text, Group } from 'react-konva';
+import { Stage, Layer, Rect, Text, Group, Line } from 'react-konva';
 import React, { useEffect, useRef, useState } from 'react';
 import type Konva from 'konva';
+import { X } from '@geist-ui/icons';
 
 // All Course and Term components have their state stored by the parent
 // The Components themselves are merely a reflection of this state
+// As a general rule we avoid using pointers for anything, because that makes it easy to introduce weird bugs
 
 // Stores the state of each Course
 class CourseModel {
@@ -16,8 +18,10 @@ class CourseModel {
   fontSize: number;
   padding: number;
   borderWidth: number; 
+  prereqs: Array<string>;
+  width: number; 
 
-  constructor(name: string, x: number, y: number, color: string = 'black', fontSize: number = 12, padding: number = 10, borderWidth: number = 1.5) {
+  constructor(name: string, x: number, y: number, prereqs: Array<string> = [], color: string = 'black', fontSize: number = 12, padding: number = 10, borderWidth: number = 1.5,  width: number = 100) {
     this.name = name;
     this.x = x;
     this.y = y;
@@ -25,6 +29,8 @@ class CourseModel {
     this.fontSize = fontSize;
     this.padding = padding;
     this.borderWidth = borderWidth;
+    this.width = width;
+    this.prereqs = prereqs;
   }
 
   getFullHeight() {
@@ -32,7 +38,7 @@ class CourseModel {
   }
 
   clone() {
-    return new CourseModel(this.name, this.x, this.y, this.color, this.fontSize, this.padding, this.borderWidth);
+    return new CourseModel(this.name, this.x, this.y, [...this.prereqs], this.color, this.fontSize, this.padding, this.borderWidth, this.width);
   }
 }
 // Stores state of each Term 
@@ -143,9 +149,9 @@ function TermView({term}: {term: TermModel}) {
         cornerRadius={5}
       />
       <Rect
-        fill="#DFDFDF" 
+        fill="#E5E5E5" 
         width={term.width-2*term.padding} 
-        height={term.innerPadding}
+        height={term.innerPadding/2}
         x={term.padding} 
         y={term.getContainerStartY()+term.insertIndex*(32+term.innerPadding)-term.innerPadding}
         cornerRadius={5}
@@ -157,22 +163,26 @@ function TermView({term}: {term: TermModel}) {
 
 function CourseView({course, setTerms, setCourses} : {course: CourseModel, setTerms : React.Dispatch<React.SetStateAction<TermModel[]>>, setCourses : React.Dispatch<React.SetStateAction<CourseModel[]>>}){
 
-  const [width, setWidth] = useState(100);
   const textRef = useRef<Konva.Text>(null);
   const blockRef = useRef<Konva.Group>(null);
 
   // Set size based on text size
   useEffect(()=>{
-    if(textRef.current !== null) {
-      setWidth(textRef.current.getTextWidth()+course.padding*2);
-    }
+    setCourses(prevCourses => prevCourses.map(c => {
+      const newCourse = c.clone();
+      if(newCourse.name === course.name) {
+        newCourse.width = textRef.current ? textRef.current.getTextWidth()+course.padding*2 : newCourse.width;
+      }
+      return newCourse;
+    }))
+    
   },[])
 
   function getPosition() {
     if(blockRef.current === null) return {x: 0, y: 0}; 
     const absolute = blockRef.current.getAbsolutePosition();
     const stageOffset = blockRef.current.getStage()?.position() ?? { x: 0, y: 0 };
-    return {x: absolute.x - stageOffset.x + width/2, y: absolute.y - stageOffset.y + course.getFullHeight()/2};
+    return {x: absolute.x - stageOffset.x + course.width/2, y: absolute.y - stageOffset.y + course.getFullHeight()/2};
   }
 
   function onDragStart() {
@@ -199,7 +209,7 @@ function CourseView({course, setTerms, setCourses} : {course: CourseModel, setTe
    * 
    * This in particular is a problem when dragging a Course from one Term to another.
    * If the y position in the new term is the same, the actual y position won't update
-   * To fix this see the work-around below
+   * To fix this we update the position as it moves.
    */
   
   function updateCoursesInTerm(newTerm : TermModel) {
@@ -210,10 +220,6 @@ function CourseView({course, setTerms, setCourses} : {course: CourseModel, setTe
           newCourse.x = newTerm.x + newTerm.padding;
           newCourse.y = newTerm.getContainerStartY()+newTerm.courses.indexOf(newCourse.name)*(newCourse.getFullHeight() + newTerm.innerPadding);
 
-          // Work-around: update manually
-          if(c.name === course.name) {
-            blockRef.current?.position({x: newCourse.x, y: newCourse.y}); 
-          }
         }
         return newCourse;
       })
@@ -235,6 +241,15 @@ function CourseView({course, setTerms, setCourses} : {course: CourseModel, setTe
         return newTerm;
       })
     ); 
+    
+    setCourses(prevCourses => prevCourses.map(c => {
+      const newCourse = c.clone();
+      if(newCourse.name === course.name) {
+        newCourse.x = position.x-course.width/2;
+        newCourse.y = position.y-course.getFullHeight()/2;
+      }
+      return newCourse;
+    }))
     
     
 
@@ -266,7 +281,7 @@ function CourseView({course, setTerms, setCourses} : {course: CourseModel, setTe
       strokeWidth={course.borderWidth}
 
       fill={"white"} 
-      width={width} 
+      width={course.width} 
       height={course.getFullHeight()} 
 
       x={0}
@@ -301,7 +316,7 @@ export default function Canvas({width, height} : {width : number, height : numbe
 
   const SAMPLE_COURSES = ['CS 240', 'MATH 239', 'PSYCH 207', 'CO 250', 'ENGL 192', 'ECE 105', 'SE 212', 'STAT 206'];
   const [courses, setCourses] = useState<Array<CourseModel>>(SAMPLE_COURSES.map((name)=>{
-    return new CourseModel(name, 0, 312);
+    return new CourseModel(name, 0, 312, ['CS 240']);
   }));
 
 
@@ -310,6 +325,15 @@ export default function Canvas({width, height} : {width : number, height : numbe
       <Layer>
         {
           terms.map((term) => <TermView key={term.name} term={term}></TermView>)
+        }
+      </Layer>
+      <Layer>
+        {
+          courses.map(course=>course.prereqs.map(prereq => {
+            const otherIndex = courses.findIndex(c => c.name == prereq);
+            const otherCourse = courses[otherIndex];
+            return <Line opacity={0.5} key={`${prereq}->${course.name}`} stroke="black" strokeWidth={2} points={[course.x+course.width/2, course.y+course.getFullHeight()/2, otherCourse ? otherCourse.x+otherCourse.width/2 : course.x, otherCourse ? otherCourse.y+otherCourse.getFullHeight()/2 : course.y]}/>
+          })).flat()
         }
       </Layer>
       <Layer>
@@ -323,6 +347,7 @@ export default function Canvas({width, height} : {width : number, height : numbe
         <CourseBlock x={0} y={0} name='ENGL 192' color={"#34C759"}/>
         <CourseBlock x={0} y={0} name='ECE 105' color={"#F7B955"}/> */}
       </Layer>
+      
     </Stage>
   );
 }
@@ -330,9 +355,11 @@ export default function Canvas({width, height} : {width : number, height : numbe
 // todo
 // center camera  DONE
   // add a button to do this? (do this on resize too)
-  // add a trash can
+  // add a trash can (delete hte lineage)
   // adding courses with prereq chains
-  // Remove hard-coded 32s
+  // Remove hard-coded 32s, also consider refactoring the 3 drag handlers (factor out sub-routines)
+  // opacity should increase when the entire prereq chain is locked in
+  // animation - should they follow each-other like the strings are elastics?
 
   // courses should move to top layer when clicked DONE
   // Also you should be able to insert anywhere in the order DONE

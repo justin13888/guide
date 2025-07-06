@@ -228,7 +228,7 @@ export default function SideBar() {
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-xl font-medium text-gray-500">{course.code}</span>
                                             <button 
-                                                className="px-3 py-1.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-lg transition-colors"
+                                                className="px-3 py-1.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-lg transition-colors hover:cursor-pointer"
                                                 onClick={() => {}}
                                             >
                                                 Add Course
