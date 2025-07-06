@@ -12,6 +12,9 @@ import {
 } from "./step3-parse-requirements";
 import type { ApiCourse } from "./step1-fetch-course-data";
 import { ensureNonNull } from "./step1-fetch-course-data";
+import { writeFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
 // Output types matching our database schema
 export type TransformedCourse = {
@@ -298,12 +301,42 @@ async function insertPrerequisiteNodes(
 }
 
 /**
+ * Write transformed course data to a JSON file for debugging
+ */
+export function writeTransformedCoursesToFile(
+  transformedCourses: TransformedCourse[],
+  filename: string = "transformed-courses.json",
+): void {
+  // Get the directory where this script is located
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const outputPath = join(__dirname, filename);
+
+  try {
+    const outputData = {
+      timestamp: new Date().toISOString(),
+      totalCourses: transformedCourses.length,
+      courses: transformedCourses,
+    };
+
+    writeFileSync(outputPath, JSON.stringify(outputData, null, 2), "utf-8");
+    console.log(`✅ Transformed course data written to: ${outputPath}`);
+  } catch (error) {
+    console.error(`❌ Error writing to ${outputPath}:`, error);
+  }
+}
+
+/**
  * Insert multiple courses in batch
  */
 export async function insertCourseDataBatch(
   transformedCourses: TransformedCourse[],
   batchSize: number = 50,
+  debugOutput: boolean = true,
 ): Promise<InsertionResult[]> {
+  // Output to JSON file by default (for debugging purposes)
+  writeTransformedCoursesToFile(transformedCourses);
+
   const results: InsertionResult[] = [];
 
   // Process in batches to avoid overwhelming the database
