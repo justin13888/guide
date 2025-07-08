@@ -36,6 +36,11 @@ type CoursesState = {
     [key: string]: Course;
 };
 
+type Department = {
+    department: string,
+    count: number
+}
+
 // TODO: Display more course information in the sidebar
 // TODO: Add filters or advanced searching
 // TODO: Separate requirements using 'and'
@@ -81,6 +86,8 @@ export default function SideBar() {
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [activeOption, setActiveOption] = useState<string>('');
     const [courses, setCourses] = useState<CoursesState>({});
+    const [departments, setDepartments] = useState<Array<Department>>([]);
+
     
     useEffect(() => {
         async function fetchCourses() {
@@ -104,7 +111,15 @@ export default function SideBar() {
             console.error('Error fetching courses:', error);
           }
         }
+        async function fetchDepartments() {
+            const response = await fetch(`/api/courses/departments`); 
+            const json = await response.json();
+
+            setDepartments(json.data);
+        }
+
         fetchCourses();
+        fetchDepartments();
       }, []);
 
     const getButtonStyles = (option: string): ButtonStyles => {
@@ -138,6 +153,7 @@ export default function SideBar() {
                 antirequisites: data3.data.map((course: AntiRequisite) => `${course.department} ${course.course_number} - ${course.title}`)
             }
         }));
+
     }
 
     return (
@@ -218,7 +234,7 @@ export default function SideBar() {
                 <hr className="mt-4 -mx-8 border-t-2 border-gray-200" />
             </div>
             <div className="flex-1 px-8 overflow-y-auto">
-                {activeOption && (
+                {activeOption ? (
                     <div className="py-4">
                         {(() => {
                             const course = courses[activeOption];
@@ -272,7 +288,20 @@ export default function SideBar() {
                             return <p className="text-gray-600">No course information available</p>;
                         })()}
                     </div>
-                )}
+                )
+                :
+                <div className="py-4">
+                    <h2 className='pb-4'>Use the search bar to find a course!</h2>
+                    <h2>Departments</h2>
+                {
+                    departments.map(item => <div key={item.department} className='flex'>
+                        <div className='w-24'>{item.department}</div>
+                        <div>{item.count}</div>
+                    </div>)
+                    
+                }
+                </div>
+                }
             </div>
         </div>
     )
