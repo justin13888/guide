@@ -84,3 +84,30 @@ export const programRequirementsSchema = z.object({
   notes: z.array(z.string()).optional().describe('Any additional notes or caveats.'),
 });
 export type ProgramRequirements = z.infer<typeof programRequirementsSchema>;
+
+// Prerequisite path types
+export const prerequisitePathSchema = z.object({
+  department: z.string(),
+  courseNumber: z.string(),
+  title: z.string().optional(),
+  path: z.array(z.object({
+    department: z.string(),
+    courseNumber: z.string(),
+    title: z.string().optional(),
+  })),
+  depth: z.number(),
+  relationContext: z.string().optional().describe('Indicates if this is part of an AND/OR relationship'),
+});
+export type PrerequisitePath = z.infer<typeof prerequisitePathSchema>;
+
+export const prerequisiteChainsResponseSchema = z.object({
+  targetCourse: z.object({
+    department: z.string(),
+    courseNumber: z.string(),
+    title: z.string().optional(),
+  }),
+  paths: z.array(prerequisitePathSchema),
+  maxDepth: z.number(),
+  totalPaths: z.number(),
+});
+export type PrerequisiteChainsResponse = z.infer<typeof prerequisiteChainsResponseSchema>;

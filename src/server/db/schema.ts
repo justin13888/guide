@@ -176,6 +176,11 @@ export const prerequisiteNodes = pgTable(
         },
       ],
     },
+    index("idx_prerequisite_nodes_dept_course").on(
+      table.department,
+      table.courseNumber,
+    ),
+    index("idx_prerequisite_nodes_parent_id").on(table.parentId),
   ],
 );
 
@@ -201,6 +206,7 @@ export const coursePrerequisites = pgTable(
         },
       ],
     },
+    index("idx_course_prerequisites_root_node_id").on(table.rootNodeId),
   ],
 );
 
