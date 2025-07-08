@@ -1,0 +1,23 @@
+--> Basic Feature 1 Output
+--> Basic Feature 2 Output
+--> Basic Feature 3 Output
+department                  course_number
+-------------------------------------------
+ACTSC                       232
+STAT                        231
+STAT                        241
+STAT                        340
+STAT                        221
+CS                          484
+AMATH                       383
+AFM                         483
+ECE                         457C
+
+--> Basic Feature 4 Output
+
+department                  course_number           title
+------------------------------------------------------------------
+STAT			            221			          	Statistics (Non-Specialist Level)
+STAT			            241			        	Statistics (Advanced Level)
+
+--> Basic Feature 5 Output

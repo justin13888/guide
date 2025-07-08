@@ -116,6 +116,9 @@ export function parseRequirementsDescription(
 
     if (!content) continue;
 
+    // Debug logging
+    console.log(`Processing section type: ${type}, content: ${content}`);
+
     // 2. Parse restrictions (faculty requirements only)
     const sectionRestrictions = parseRestrictions(content);
     restrictions.push(...sectionRestrictions);
@@ -234,11 +237,46 @@ function parseProgramRestrictions(content: string): Array<{
           }
           programs = commaParts;
         } else {
-          // No commas: split by ' and ' or ' or '
-          programs = programText
-            .split(/\s+(?:and|or)\s+/i)
-            .map((p) => p.trim())
-            .filter(Boolean);
+          // No commas: need to handle "and" vs "or" splitting
+          // First, try to split by " or " to handle cases like "A or B"
+          const orParts = programText.split(/\s+or\s+/i).map((p) => p.trim());
+
+          if (orParts.length > 1) {
+            // We have "or" splits, use them
+            programs = orParts;
+          } else {
+            // No "or" found, check for "and" splits
+            // But be careful - some program names contain "and" (like "Geography and Aviation")
+            // We'll split by " and " but only if it looks like separate programs
+            const andParts = programText
+              .split(/\s+and\s+/i)
+              .map((p) => p.trim());
+
+            // If we have multiple "and" parts and they look like separate programs
+            // (i.e., they don't contain common program name patterns)
+            if (andParts.length > 1) {
+              // Check if any part contains typical program indicators
+              const hasProgramIndicators = andParts.some(
+                (part) =>
+                  part.toLowerCase().includes("honours") ||
+                  part.toLowerCase().includes("minor") ||
+                  part.toLowerCase().includes("major") ||
+                  part.toLowerCase().includes("option") ||
+                  part.toLowerCase().includes("diploma"),
+              );
+
+              if (hasProgramIndicators) {
+                // These look like separate programs, split them
+                programs = andParts;
+              } else {
+                // This might be a single program name with "and", keep it whole
+                programs = [programText];
+              }
+            } else {
+              // Single program
+              programs = [programText];
+            }
+          }
         }
 
         // Further split any remaining parts that contain "or" (for cases like "A or B" within comma-separated lists)
@@ -317,7 +355,11 @@ function parseSimpleRequirements(
     isCoreq: boolean;
   }>;
 } {
+  console.log(
+    `parseSimpleRequirements called with content: "${content}", isAntireq: ${isAntireq}, isCoreq: ${isCoreq}`,
+  );
   const courses = parseCourseList(content);
+  console.log(`parseCourseList returned:`, courses);
   return {
     outerRelationType: "AND", // Simple requirements are always AND
     requirements: courses.map((course) => ({
@@ -555,6 +597,24 @@ function parseCourseList(content: string): Array<{
       courseNumber: match[2]!,
       minGrade,
     });
+  }
+
+  // Handle courses without spaces (like "HLTH460")
+  const courseWithoutSpaceRegex = /([A-Z]{2,4})(\d{3}[A-Z]?)/g;
+
+  while ((match = courseWithoutSpaceRegex.exec(content)) !== null) {
+    // Avoid duplicates
+    if (
+      !courses.some(
+        (c) => c.department === match![1]! && c.courseNumber === match![2]!,
+      )
+    ) {
+      courses.push({
+        department: match![1]!,
+        courseNumber: match![2]!,
+        minGrade: null,
+      });
+    }
   }
 
   // Handle simple course patterns (fallback) - propagate department for numbers

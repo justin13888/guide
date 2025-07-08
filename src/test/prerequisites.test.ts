@@ -306,7 +306,7 @@ describe("Prerequisite Parsing", () => {
     }
 
     // Check that program restrictions are parsed correctly
-    expect(result.programRestrictions.length).toBe(4);
+    expect(result.programRestrictions.length).toBe(2);
 
     const expectedPrograms = [
       {
@@ -318,7 +318,7 @@ describe("Prerequisite Parsing", () => {
         program: "Science and Aviation",
         level: null,
         restrictionType: "INCLUDE" as const,
-      }
+      },
     ];
 
     expect(result.programRestrictions).toEqual(expectedPrograms);

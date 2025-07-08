@@ -8,7 +8,7 @@ SELECT title, description, requirements
 	WHERE department = 'STAT' AND course_number = '231'
 
 --> Basic Feature 3
-SELECT
+SELECT DISTINCT
     cp.course_number AS course_number,
     cp.department AS department
     FROM course_prerequisites AS cp
@@ -19,8 +19,8 @@ SELECT
 
 --> Basic Feature 4
 SELECT
-	ar.antirequisite_department AS department
-	ar.antirequisite_course_number AS course_number
+	ar.antirequisite_department AS department,
+	ar.antirequisite_course_number AS course_number,
 	c.title AS title
 	FROM antirequisites AS ar
 	LEFT JOIN courses AS c

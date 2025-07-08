@@ -26,6 +26,7 @@ import { db } from "~/server/db";
 interface ImportOptions {
   clearExisting?: boolean;
   saveToFile?: boolean;
+  debugOutput?: boolean; // New option for debug output
   batchSize?: number;
   maxCourses?: number; // For testing with a subset
 }
@@ -36,13 +37,14 @@ export async function importCourses(
   const {
     clearExisting = false,
     saveToFile = false,
+    debugOutput = true,
     batchSize = 50,
     maxCourses,
   } = options;
 
   console.log("🚀 Starting course import process...");
   console.log(
-    `Options: clearExisting=${clearExisting}, saveToFile=${saveToFile}, batchSize=${batchSize}, maxCourses=${maxCourses || "all"}`,
+    `Options: clearExisting=${clearExisting}, saveToFile=${saveToFile}, debugOutput=${debugOutput}, batchSize=${batchSize}, maxCourses=${maxCourses || "all"}`,
   );
 
   try {
@@ -86,7 +88,11 @@ export async function importCourses(
     // Step 6: Insert into database
     console.log("💾 Inserting courses into database...");
     const startTime = Date.now();
-    const results = await insertCourseDataBatch(transformedCourses, batchSize);
+    const results = await insertCourseDataBatch(
+      transformedCourses,
+      batchSize,
+      debugOutput,
+    );
     const endTime = Date.now();
 
     // Step 7: Generate and display statistics
@@ -130,6 +136,7 @@ async function main() {
   const options: ImportOptions = {
     clearExisting: args.includes("--clear"),
     saveToFile: args.includes("--save"),
+    debugOutput: !args.includes("--no-debug"), // Default to true, disable with --no-debug
     batchSize: 50,
   };
 
@@ -159,16 +166,18 @@ Usage: pnpm run import-courses [options]
 Options:
   --clear              Clear existing course data before import
   --save               Save transformed data to file
+  --no-debug           Disable output of transformed data to JSON file (enabled by default)
   --batch-size=N       Set batch size for database insertion (default: 50)
   --max-courses=N      Limit number of courses to import (for testing)
   --help, -h           Show this help message
 
 Examples:
-  pnpm run import-courses                    # Import all courses
+  pnpm run import-courses                    # Import all courses (with debug output)
   pnpm run import-courses --clear            # Clear existing data and import all
   pnpm run import-courses --max-courses=10   # Import only 10 courses (for testing)
   pnpm run import-courses --batch-size=100   # Use larger batch size
   pnpm run import-courses --save             # Save final transformed data to file
+  pnpm run import-courses --no-debug         # Disable debug output to JSON file
     `);
     return;
   }
