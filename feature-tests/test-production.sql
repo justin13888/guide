@@ -10,6 +10,16 @@ SELECT DISTINCT
     WHERE (pn.department = 'STAT' AND pn.course_number = '230') OR
           (pn2.department = 'STAT' AND pn2.course_number = '230')
 
+--> Indices for Basic Feature 3
+CREATE INDEX idx_prerequisite_nodes_dept_course
+    ON prerequisite_nodes (department, course_number);
+
+CREATE INDEX idx_prerequisite_nodes_parent_id
+    ON prerequisite_nodes (parent_id);
+
+CREATE INDEX idx_course_prerequisites_root_node_id
+    ON course_prerequisites (root_node_id);
+
 --> Basic Feature 4
 SELECT
 	ar.antirequisite_department AS department,
