@@ -23,7 +23,7 @@ pnpm run db:push
 # Option 1: Seed with sample data (small set of example courses for development)
 pnpm seed
 # OR
-# Option 2: (Work in progress) Import real course data from UWaterloo API (comprehensive dataset)
+# Option 2: Import real course data from UWaterloo API (comprehensive dataset)
 pnpm import-courses --clear
 
 # Start dev server
