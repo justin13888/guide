@@ -5,9 +5,20 @@ SELECT department, COUNT(*)
 	ORDER BY COUNT(*) DESC;
 
 --> Basic Feature 2
-SELECT title, description, requirements
+SELECT department, course_number, title
 	FROM courses
-	WHERE department = 'STAT' AND course_number = '231'
+	WHERE (fall = true OR fall = true)
+        AND (winter = true OR winter = true)
+        AND (spring = true OR spring = false)
+        AND (course_number LIKE '1%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%')
 
 --> Basic Feature 3
 SELECT DISTINCT

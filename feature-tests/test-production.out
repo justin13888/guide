@@ -156,6 +156,58 @@ TN         	1
 INTST      	1
 
 --> Basic Feature 2 Output
+department      course_number       title
+------------------------------------------------------------------------
+ARBUS           101                 Introduction to Business in North America
+ARBUS           102                 Accounting Information for Managers
+AFM             123                 Accounting Information for Managers
+AFM             131                 Introduction to Business in North America
+BUS             111W                Understanding the Business Environment (WLU)
+ARCH            173                 Building Construction 2
+CHE             102                 Chemistry for Engineers
+CHEM            120                 General Chemistry 1
+CHINA           102R                First-Year Chinese 2
+CHINA           101R                First-Year Chinese 1
+THPERF          102                 Introduction to Performance
+CS              100                 Introduction to Computing Through Applications
+EARTH           121                 Introductory Earth Sciences
+COMMST          102                 Introduction to Performance
+EARTH           122                 Introductory Environmental Sciences
+COMMST          100                 Interpersonal Communication
+ENGL            129R                Written Academic English
+PSYCH           101                 Introductory Psychology
+ECON            102                 Introduction to Macroeconomics
+EASIA           100R                Introduction to East Asia
+ECON            101                 Introduction to Microeconomics
+ENGL            109                 Introduction to Academic Writing
+EMLS            129R                Written Academic English
+ENVS            178                 Environmental Applications of Data Management and Statistics
+ENVS            195                 Introduction to Environmental Studies
+FR              192B                French Language 1: Module 2
+FR              192A                French Language 1: Module 1
+GER             101                 Elementary German 1
+ITAL            101                 Introduction to Italian Language 1
+FR              151                 Basic French 1
+GEOG            101                 Human Geographies: People, Space and Change
+FR              152                 Basic French 2
+SDS             150R                Lifespan Processes
+GEOG            102                 Global Environmental Systems: Processes and Change
+GER             102                 Elementary German 2
+ITAL            102                 Introduction to Italian Language 2
+KOREA           102R                First-Year Korean 2
+JAPAN           101R                First-Year Japanese 1
+SDS             131R                Political Ideologies and Social Development
+JAPAN           102R                First-Year Japanese 2
+MATH            104                 Introductory Calculus for Arts and Social Science
+MATH            127                 Calculus 1 for the Sciences
+MATH            138                 Calculus 2 for Honours Mathematics
+MATH            106                 Applied Linear Algebra 1
+MATH            128                 Calculus 2 for the Sciences
+KOREA           101R                First-Year Korean 1
+MATH            137                 Calculus 1 for Honours Mathematics
+MATH            135                 Algebra for Honours Mathematics
+MATH            103                 Introductory Algebra for Arts and Social Science
+
 --> Basic Feature 3 Output
 department                  course_number
 -------------------------------------------

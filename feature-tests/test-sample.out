@@ -17,6 +17,24 @@ BME         1
 SYDE        1
 
 --> Basic Feature 2 Output
+department      course_number       title
+------------------------------------------------------------------------
+MATH            118                 Calculus 1
+MATH            119                 Calculus 1 (Advanced)
+MATH            128                 Calculus 1 for Engineering
+MATH            138                 Calculus 1 for Mathematics
+MATH            148                 Calculus 1 (Honours)
+MATH            114                 Linear Algebra for Engineering
+MATH            115                 Linear Algebra for Honours Mathematics
+MATH            136                 Linear Algebra 1
+MATH            146                 Linear Algebra 1 (Honours)
+CS              115                 Introduction to Computer Science 1
+CS              135                 Designing Functional Programs
+CS              137                 Introduction to Computer Science
+CS              138                 Introduction to Computer Science
+CS              145                 Principles of Computer Science
+ECE             150                 Fundamentals of Programming
+PHYS            139                 Physics for Engineering
 
 title
 --------------
