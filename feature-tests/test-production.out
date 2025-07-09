@@ -177,3 +177,13 @@ STAT			            221			          	Statistics (Non-Specialist Level)
 STAT			            241			        	Statistics (Advanced Level)
 
 --> Basic Feature 5 Output
+
+department  course_number  title                                         depth  path_string  path_array        parent_relation
+-----------------------------------------------------------------------------------------------------------------------------------
+CS          241            Foundations of Sequential Programs            2      CS 241       ["CS 241"]         OR
+CS          241E           Foundations of Sequential Programs (Enriched) 2      CS 241E      ["CS 241E"]        OR
+CS          245            Logic and Computation                         2      CS 245       ["CS 245"]         OR
+CS          245E           Logic and Computation (Enriched)              2      CS 245E      ["CS 245E"]        OR
+SE          212            Logic and Computation                         2      SE 212       ["SE 212"]         OR
+STAT        206            Statistics for Software Engineering           2      STAT 206     ["STAT 206"]       OR
+
