@@ -2,7 +2,7 @@
 SELECT department, COUNT(*)
 	FROM courses
 	GROUP BY department
-	ORDER BY COUNT(*) DESC
+	ORDER BY COUNT(*) DESC;
 
 --> Basic Feature 2
 SELECT title, description, requirements

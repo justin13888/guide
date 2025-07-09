@@ -1,8 +1,12 @@
+--> Indices for Basic Feature 1
+CREATE INDEX idx_courses_departments
+    ON courses(department);
+
 --> Basic Feature 1
 SELECT department, COUNT(*)
 	FROM courses
 	GROUP BY department
-	ORDER BY COUNT(*) DESC
+	ORDER BY COUNT(*) DESC;
 
 --> Basic Feature 2
 --> Basic Feature 3
