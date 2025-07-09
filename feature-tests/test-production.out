@@ -178,12 +178,13 @@ STAT			            241			        	Statistics (Advanced Level)
 
 --> Basic Feature 5 Output
 
-department  course_number  title                                         depth  path_string  path_array        parent_relation
------------------------------------------------------------------------------------------------------------------------------------
-CS          241            Foundations of Sequential Programs            2      CS 241       ["CS 241"]         OR
-CS          241E           Foundations of Sequential Programs (Enriched) 2      CS 241E      ["CS 241E"]        OR
-CS          245            Logic and Computation                         2      CS 245       ["CS 245"]         OR
-CS          245E           Logic and Computation (Enriched)              2      CS 245E      ["CS 245E"]        OR
-SE          212            Logic and Computation                         2      SE 212       ["SE 212"]         OR
-STAT        206            Statistics for Software Engineering           2      STAT 206     ["STAT 206"]       OR
-
+department  course_number  title                              depth  path_string  path_array         parent_relation
+--------------------------------------------------------------------------------------------------------------------
+MATH        118            Calculus 2 for Engineering         2      MATH 118     ["MATH 118"]       OR
+MATH        119            Calculus 2 for Engineering         2      MATH 119     ["MATH 119"]       OR
+MATH        128            Calculus 2 for the Sciences        2      MATH 128     ["MATH 128"]       OR
+MATH        138            Calculus 2 for Honours Mathematics 2      MATH 138     ["MATH 138"]       OR
+MATH        148            Calculus 2 (Advanced Level)        2      MATH 148     ["MATH 148"]       OR
+STAT        220            Probability (Non-Specialist Level) 2      STAT 220     ["STAT 220"]       OR
+STAT        230            Probability                        2      STAT 230     ["STAT 230"]       OR
+STAT        240            Probability (Advanced Level)       2      STAT 240     ["STAT 240"]       OR
