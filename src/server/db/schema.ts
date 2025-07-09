@@ -274,6 +274,14 @@ export const antirequisites = pgTable(
         },
       ],
     },
+    index("idx_antirequisites_department_course").on(
+      table.department,
+      table.courseNumber,
+    ),
+    index("idx_antirequisites_antidept_anticourse").on(
+      table.antirequisiteDepartment,
+      table.antirequisiteCourseNumber,
+    ),
   ],
 );
 
