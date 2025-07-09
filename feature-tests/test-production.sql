@@ -1,4 +1,9 @@
 --> Basic Feature 1
+SELECT department, COUNT(*)
+	FROM courses
+	GROUP BY department
+	ORDER BY COUNT(*) DESC
+
 --> Basic Feature 2
 --> Basic Feature 3
 SELECT DISTINCT

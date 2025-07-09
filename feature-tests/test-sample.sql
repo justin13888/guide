@@ -1,6 +1,8 @@
 --> Basic Feature 1
-SELECT department, course_number
+SELECT department, COUNT(*)
 	FROM courses
+	GROUP BY department
+	ORDER BY COUNT(*) DESC
 
 --> Basic Feature 2
 SELECT title, description, requirements
