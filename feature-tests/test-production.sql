@@ -36,6 +36,13 @@ SELECT
 	    ar.antirequisite_course_number = c.course_number
 	WHERE ar.department = 'STAT' AND ar.course_number = '231'
 
+--> Indices for Basic Feature 4
+CREATE INDEX idx_antirequisites_department_course
+    ON antirequisites (department, course_number);
+
+CREATE INDEX idx_antirequisites_antidept_anticourse
+    ON antirequisites (antirequisite_department, antirequisite_course_number);
+
 --> Basic Feature 5
 WITH RECURSIVE prereq_paths AS (
     -- Base case: Start from the root prerequisite node for the target course
