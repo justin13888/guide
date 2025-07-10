@@ -1,10 +1,29 @@
+--> Indices for Basic Feature 1
+CREATE INDEX idx_courses_departments
+    ON courses(department);
+
 --> Basic Feature 1
 SELECT department, COUNT(*)
 	FROM courses
 	GROUP BY department
-	ORDER BY COUNT(*) DESC
+	ORDER BY COUNT(*) DESC;
 
 --> Basic Feature 2
+SELECT department, course_number, title
+	FROM courses
+	WHERE (fall = true OR fall = true)
+        AND (winter = true OR winter = true)
+        AND (spring = true OR spring = false)
+        AND (course_number LIKE '1%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%'
+        OR course_number LIKE '%')
+
 --> Basic Feature 3
 SELECT DISTINCT
     cp.course_number AS course_number,
@@ -35,6 +54,13 @@ SELECT
 	ON ar.antirequisite_department = c.department AND
 	    ar.antirequisite_course_number = c.course_number
 	WHERE ar.department = 'STAT' AND ar.course_number = '231'
+
+--> Indices for Basic Feature 4
+CREATE INDEX idx_antirequisites_department_course
+    ON antirequisites (department, course_number);
+
+CREATE INDEX idx_antirequisites_antidept_anticourse
+    ON antirequisites (antirequisite_department, antirequisite_course_number);
 
 --> Basic Feature 5
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_prerequisite_nodes_parent_id ON prerequisite_nodes(parent_id);

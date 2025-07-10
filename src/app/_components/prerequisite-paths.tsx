@@ -16,7 +16,7 @@ interface PrerequisitePath {
   relationContext?: string;
 }
 
-export default function PrerequisitePathsDemo() {
+export default function   PrerequisitePathsDemo() {
   const [department, setDepartment] = useState("CS");
   const [courseNumber, setCourseNumber] = useState("4820");
   const [maxDepth, setMaxDepth] = useState(10);
