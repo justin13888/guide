@@ -37,6 +37,12 @@ SELECT
 	WHERE ar.department = 'STAT' AND ar.course_number = '231'
 
 --> Basic Feature 5
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_prerequisite_nodes_parent_id ON prerequisite_nodes(parent_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_prerequisite_nodes_dept_course ON prerequisite_nodes(department, course_number);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_course_prerequisites_dept_course ON course_prerequisites(department, course_number);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_course_prerequisites_root_node ON course_prerequisites(root_node_id);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_courses_dept_course ON courses(department, course_number);
+
 WITH RECURSIVE prereq_paths AS (
     -- Base case: Start from the root prerequisite node for the target course
     SELECT 
