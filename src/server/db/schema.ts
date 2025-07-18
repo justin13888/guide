@@ -322,3 +322,35 @@ export const corequisites = pgTable(
     },
   ],
 );
+
+export const userCourseStatusEnum = pgEnum("user_course_status", [
+  "taken",
+  "planning",
+]);
+
+export const userCourses = pgTable(
+  "user_courses",
+  {
+    userId: varchar("user_id", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    department: varchar("department", { length: 10 })
+      .notNull()
+      .references(() => courses.department, { onDelete: "cascade" }),
+    courseNumber: varchar("course_number", { length: 10 })
+      .notNull()
+      .references(() => courses.courseNumber, { onDelete: "cascade" }),
+    status: userCourseStatusEnum("status").notNull(),
+    levelTerm: varchar("level_term", { length: 5 }), // e.g., "2A", "3B"
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.userId, table.department, table.courseNumber],
+    }),
+    index("idx_user_courses_user_id").on(table.userId),
+    index("idx_user_courses_dept_course").on(
+      table.department,
+      table.courseNumber,
+    ),
+  ],
+);
