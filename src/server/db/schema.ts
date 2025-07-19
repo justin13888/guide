@@ -334,19 +334,24 @@ export const userCourses = pgTable(
     userId: varchar("user_id", { length: 255 })
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    department: varchar("department", { length: 10 })
-      .notNull()
-      .references(() => courses.department, { onDelete: "cascade" }),
-    courseNumber: varchar("course_number", { length: 10 })
-      .notNull()
-      .references(() => courses.courseNumber, { onDelete: "cascade" }),
+    department: varchar("department", { length: 10 }).notNull(),
+    courseNumber: varchar("course_number", { length: 10 }).notNull(),
     status: userCourseStatusEnum("status").notNull(),
-    levelTerm: varchar("level_term", { length: 5 }), // e.g., "2A", "3B"
+    levelTerm: varchar("level_term", { length: 5 }),
   },
   (table) => [
     primaryKey({
       columns: [table.userId, table.department, table.courseNumber],
     }),
+    {
+      foreignKeys: [
+        {
+          columns: [table.department, table.courseNumber],
+          foreignColumns: [courses.department, courses.courseNumber],
+          onDelete: "cascade",
+        },
+      ],
+    },
     index("idx_user_courses_user_id").on(table.userId),
     index("idx_user_courses_dept_course").on(
       table.department,

@@ -29,6 +29,20 @@
       "when": 1749851807817,
       "tag": "0003_curious_ikaris",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1752879328767,
+      "tag": "0004_lush_speedball",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1752879834708,
+      "tag": "0005_rich_midnight",
+      "breakpoints": true
     }
   ]
 }
