@@ -1,5 +1,5 @@
 'use client'
-import { createContext, useState } from 'react';
+import { createContext, useEffect, useState } from 'react';
 
 import SideBar from "~/app/_components/sidebar";
 import Planner from "~/app/_components/planner";
@@ -115,7 +115,9 @@ export class TermModel {
 };
 
 export default function UI() {
-    const TERM_NAMES = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"]
+    const TERM_NAMES = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
+    
+    
     
     function getInitialTerms() {
         let currentX = 0;
@@ -129,6 +131,39 @@ export default function UI() {
     //SAMPLE_COURSES.map((name)=>{return new CourseModel(name, 0, 312, ['CS 240']);})
     const [terms, setTerms] = useState<TermModel[]>(getInitialTerms());
     const [courses, setCourses] = useState<CourseModel[]>([]);
+    
+    useEffect(()=>{
+        TERM_NAMES.forEach(async (name : string)=> {
+            const response = await fetch(`/api/terms/${name}`);
+            const data = await response.json(); 
+            if(data["error"]) return;
+            
+            const newCourses = data.map((item : {department : string, course_number : string}) => `${item.department} ${item.course_number}`);
+            
+            terms.forEach((term)=>{
+                if(term.name !== name) return;
+                setCourses(prev => [...prev, ...newCourses.map((name : string, i : number) => {
+                    const newCourse = new CourseModel(name, term.x + term.padding, 0)
+                    newCourse.y = term.getContainerStartY()+i*(newCourse.getFullHeight() + term.innerPadding);
+                    return newCourse
+                })])
+            })
+            
+
+            setTerms(
+                prevTerms => 
+                prevTerms.map(term => {
+                    const newTerm = term.clone();
+                    // Add courses
+                    if(newTerm.name === name){
+                        newTerm.courses.push(...newCourses);
+                    }
+                    return newTerm;
+                })
+            ); 
+        })
+    }, []);
+
 
     return <CourseContext.Provider value={{courses : courses, terms: terms, setCourses : setCourses, setTerms : setTerms}}>
         <div className="flex-1">

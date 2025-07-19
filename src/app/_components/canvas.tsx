@@ -97,6 +97,12 @@ function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight} : 
         if(newTerm.courses.includes(course.name)) {
           newTerm.courses = newTerm.courses.filter(name => name !== course.name);
           updateCoursesInTerm(newTerm);
+          fetch(`/api/terms/${term.name}/delete`, {
+            method: 'delete',
+            body: JSON.stringify({
+              course: course.name.replace(" ", "-")
+            })
+          })
         }
         return newTerm;
       })
@@ -116,18 +122,18 @@ function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight} : 
    */
   
   function updateCoursesInTerm(newTerm : TermModel) {
-    setCourses(prevCourses => 
-      prevCourses.map((c) => {
-        const newCourse = c.clone();
-        if(newTerm.courses.includes(newCourse.name)) {
-          newCourse.x = newTerm.x + newTerm.padding;
-          newCourse.y = newTerm.getContainerStartY()+newTerm.courses.indexOf(newCourse.name)*(newCourse.getFullHeight() + newTerm.innerPadding);
+        setCourses(prevCourses => 
+        prevCourses.map((c) => {
+            const newCourse = c.clone();
+            if(newTerm.courses.includes(newCourse.name)) {
+            newCourse.x = newTerm.x + newTerm.padding;
+            newCourse.y = newTerm.getContainerStartY()+newTerm.courses.indexOf(newCourse.name)*(newCourse.getFullHeight() + newTerm.innerPadding);
 
-        }
-        return newCourse;
-      })
-    )
-  }
+            }
+            return newCourse;
+        })
+        )
+    }
 
   function onDragMove() {
     // Check collision, darken if necessary 
@@ -178,6 +184,13 @@ function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight} : 
           const idealIndex= newTerm.getIdealInsertIndex(position.y);
           newTerm.courses.splice(idealIndex, 0, course.name); 
           updateCoursesInTerm(newTerm);
+
+          fetch(`/api/terms/${term.name}/add`, {
+            method: 'post',
+            body: JSON.stringify({
+              course: course.name.replace(" ", "-")
+            })
+          });
         }
         return newTerm;
       })
@@ -260,7 +273,7 @@ export default function Canvas({width, height} : {width : number, height : numbe
   // opacity should increase when the entire prereq chain is locked in
   // animation - should they follow each-other like the strings are elastics?
   // user table
-  // fix sidebar
+  // fix sidebar DONE
 
   // notify justin of schema changes
 

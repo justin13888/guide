@@ -333,7 +333,8 @@ export const userCourses = pgTable(
   {
     userId: varchar("user_id", { length: 255 })
       .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+      //.references(() => users.id, { onDelete: "cascade" })
+      ,
     department: varchar("department", { length: 10 }).notNull(),
     courseNumber: varchar("course_number", { length: 10 }).notNull(),
     status: userCourseStatusEnum("status").notNull(),
