@@ -1,7 +1,7 @@
 'use client'
 import { Search } from '@geist-ui/icons'
-import { useEffect, useState } from 'react';
-
+import { useEffect, useState, useContext } from 'react';
+import { CourseContext, CourseModel } from './ui';
 
 type ButtonStyles = {
     active: string;
@@ -88,6 +88,7 @@ export default function SideBar() {
     const [courses, setCourses] = useState<CoursesState>({});
     const [departments, setDepartments] = useState<Array<Department>>([]);
 
+    const setPlannerCourses = useContext(CourseContext)?.setCourses;
     
     useEffect(() => {
         async function fetchCourses() {
@@ -245,7 +246,7 @@ export default function SideBar() {
                                             <span className="text-xl font-medium text-gray-500">{course.code}</span>
                                             <button 
                                                 className="px-3 py-1.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-lg transition-colors hover:cursor-pointer"
-                                                onClick={() => {}}
+                                                onClick={() => {setPlannerCourses && setPlannerCourses(prev => [...prev, new CourseModel(course.code, 0, 312)])}}
                                             >
                                                 Add Course
                                             </button>

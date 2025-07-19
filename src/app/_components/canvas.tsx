@@ -1,116 +1,15 @@
 'use client'; // if using Next.js App Router
 
 import { Stage, Layer, Rect, Text, Group, Line } from 'react-konva';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import type Konva from 'konva';
-import { X } from '@geist-ui/icons';
-
+import { CourseModel, TermModel, CourseContext } from './ui';
 // All Course and Term components have their state stored by the parent
 // The Components themselves are merely a reflection of this state
 // As a general rule we avoid using pointers for anything, because that makes it easy to introduce weird bugs
 
 // Stores the state of each Course
-class CourseModel {
-  name: string;
-  x: number;
-  y: number;
-  color: string;
-  fontSize: number;
-  padding: number;
-  borderWidth: number; 
-  prereqs: Array<string>;
-  width: number; 
 
-  constructor(name: string, x: number, y: number, prereqs: Array<string> = [], color: string = 'black', fontSize: number = 12, padding: number = 10, borderWidth: number = 1.5,  width: number = 100) {
-    this.name = name;
-    this.x = x;
-    this.y = y;
-    this.color = color;
-    this.fontSize = fontSize;
-    this.padding = padding;
-    this.borderWidth = borderWidth;
-    this.width = width;
-    this.prereqs = prereqs;
-  }
-
-  getFullHeight() {
-    return this.fontSize + this.padding*2;
-  }
-
-  clone() {
-    return new CourseModel(this.name, this.x, this.y, [...this.prereqs], this.color, this.fontSize, this.padding, this.borderWidth, this.width);
-  }
-}
-// Stores state of each Term 
-class TermModel {
-  name: string;
-  x: number; 
-  y: number; 
-  containerHeight: number;
-  width: number; 
-  height: number; 
-  fontSize: number;
-  padding: number;
-  borderWidth: number;
-  innerPadding: number; 
-  marginRight : number;
-  hovered: boolean;
-  insertIndex: number;
-  courses: Array<string>; 
-
-  constructor(name: string, x : number, y : number, containerHeight: number = 0, hovered : boolean = false, width: number = 120, height: number = 300, fontSize: number = 12, padding: number = 12, borderWidth: number = 1, innerPadding: number = 6, marginRight : number = 12, insertIndex : number = 0) {
-    this.name = name;
-    this.x = x; 
-    this.y = y;
-    this.width = width; 
-    this.height = height;
-    this.containerHeight = containerHeight;
-    this.fontSize = fontSize;
-    this.padding = padding;
-    this.borderWidth = borderWidth;
-    this.innerPadding = innerPadding; 
-    this.marginRight = marginRight;
-    this.hovered = hovered;
-    this.insertIndex = insertIndex;
-    this.courses = [];
-  }
-
-  getFullWidth(){
-    return this.width + this.marginRight; 
-  }
-
-  getRenderedHeight(){
-    this.containerHeight = (32 + this.innerPadding)*this.courses.length; // Temporary work-around, value should not be hard-coded
-    return Math.max(this.height, this.getContainerStartY()+this.containerHeight+this.padding)
-  }
-
-  getContainerStartY(){
-    return this.padding + this.fontSize + this.innerPadding;
-  }
-
-  clone() {
-    const clone = new TermModel(this.name, this.x, this.y, this.containerHeight, this.hovered, this.width, this.height, this.fontSize, this.padding, this.borderWidth, this.innerPadding, this.marginRight, this.insertIndex)
-    clone.courses = [...this.courses];
-    return clone;
-  }
-
-  getIdealInsertIndex(y : number) {
-    let idealIndex = 0;
-    let currentY = this.getContainerStartY();
-    let minimum =  Math.abs(y - currentY);
-
-    for(let i = 0; i < this.courses.length; i++) {
-      currentY += this.innerPadding + 32; // Hard-coded, not ideal
-      const difference = Math.abs(y - currentY);
-      if(difference < minimum) {
-        minimum = difference;
-        idealIndex = i+1;
-      }
-    }
-
-    return idealIndex; 
-  }
-};
 
 
 function TermView({term}: {term: TermModel}) {
@@ -161,7 +60,7 @@ function TermView({term}: {term: TermModel}) {
   </Group>
 }
 
-function CourseView({course, setTerms, setCourses} : {course: CourseModel, setTerms : React.Dispatch<React.SetStateAction<TermModel[]>>, setCourses : React.Dispatch<React.SetStateAction<CourseModel[]>>}){
+function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight} : {course: CourseModel, setTerms : React.Dispatch<React.SetStateAction<TermModel[]>>, setCourses : React.Dispatch<React.SetStateAction<CourseModel[]>>, canvasWidth : number, canvasHeight : number}){
 
   const textRef = useRef<Konva.Text>(null);
   const blockRef = useRef<Konva.Group>(null);
@@ -183,6 +82,10 @@ function CourseView({course, setTerms, setCourses} : {course: CourseModel, setTe
     const absolute = blockRef.current.getAbsolutePosition();
     const stageOffset = blockRef.current.getStage()?.position() ?? { x: 0, y: 0 };
     return {x: absolute.x - stageOffset.x + course.width/2, y: absolute.y - stageOffset.y + course.getFullHeight()/2};
+  }
+
+  function getDistance(x1 : number, y1 : number, x2 : number, y2: number) {
+    return Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2))
   }
 
   function onDragStart() {
@@ -257,6 +160,13 @@ function CourseView({course, setTerms, setCourses} : {course: CourseModel, setTe
 
   function onDragEnd() {
     const position = getPosition();
+
+    const absolute = blockRef.current?.getAbsolutePosition();
+    if(absolute && getDistance(absolute.x, absolute.y, canvasWidth, canvasHeight) < 100) {
+      setCourses(prev => prev.filter((c : CourseModel) => c.name !== course.name ))
+      return;
+    }
+
     setTerms(
       prevTerms => 
       prevTerms.map(term => {
@@ -301,35 +211,23 @@ function CourseView({course, setTerms, setCourses} : {course: CourseModel, setTe
 
 
 export default function Canvas({width, height} : {width : number, height : number}) {
-    const TERM_NAMES = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"]
-
-  function getInitialTerms() {
-    let currentX = 0;
-    return TERM_NAMES.map((name)=>{
-      const termModel = new TermModel(name, currentX, 0);
-      currentX += termModel.getFullWidth();
-      return termModel;
-    });
-  }
-  const [terms, setTerms] = useState<Array<TermModel>>(getInitialTerms());
   
-
-  const SAMPLE_COURSES = ['CS 240', 'MATH 239', 'PSYCH 207', 'CO 250', 'ENGL 192', 'ECE 105', 'SE 212', 'STAT 206'];
-  const [courses, setCourses] = useState<Array<CourseModel>>(SAMPLE_COURSES.map((name)=>{
-    return new CourseModel(name, 0, 312, ['CS 240']);
-  }));
-
+  const terms = useContext(CourseContext)?.terms;
+  const setTerms = useContext(CourseContext)?.setTerms;
+  const courses = useContext(CourseContext)?.courses;
+  const setCourses = useContext(CourseContext)?.setCourses;
+  
 
   return (
     <Stage width={width} height={height} draggable={true} x={width/8} y={height/4}>
       <Layer>
         {
-          terms.map((term) => <TermView key={term.name} term={term}></TermView>)
+          terms?.map((term) => <TermView key={term.name} term={term}></TermView>)
         }
       </Layer>
       <Layer>
         {
-          courses.map(course=>course.prereqs.map(prereq => {
+          courses?.map(course=>course.prereqs.map(prereq => {
             const otherIndex = courses.findIndex(c => c.name == prereq);
             const otherCourse = courses[otherIndex];
             return <Line opacity={0.5} key={`${prereq}->${course.name}`} stroke="black" strokeWidth={2} points={[course.x+course.width/2, course.y+course.getFullHeight()/2, otherCourse ? otherCourse.x+otherCourse.width/2 : course.x, otherCourse ? otherCourse.y+otherCourse.getFullHeight()/2 : course.y]}/>
@@ -338,7 +236,7 @@ export default function Canvas({width, height} : {width : number, height : numbe
       </Layer>
       <Layer>
         {
-          courses.map(course=><CourseView course={course} key={course.name} setTerms={setTerms} setCourses={setCourses} ></CourseView>)
+          setTerms && setCourses && courses?.map(course=><CourseView course={course} key={course.name} canvasWidth={width} canvasHeight={height} setTerms={setTerms} setCourses={setCourses} ></CourseView>)
         }
         {/* <CourseBlock x={0} y={0} name='CS 240' color={"#45DEC4"}/>
         <CourseBlock x={0} y={0} name='MATH 239' color={"#E93D82"}/>
@@ -354,13 +252,22 @@ export default function Canvas({width, height} : {width : number, height : numbe
 
 // todo
 // center camera  DONE
-  // add a button to do this? (do this on resize too)
-  // add a trash can (delete hte lineage)
-  // adding courses with prereq chains
+  // add a button to do this? (do this on resize too) 
+  // add a trash can DONE
+  // adding courses DONE
+    // prereq chain / checking if it already exists / recommended courses + adding prereq chains + deleting entire lineage
   // Remove hard-coded 32s, also consider refactoring the 3 drag handlers (factor out sub-routines)
   // opacity should increase when the entire prereq chain is locked in
   // animation - should they follow each-other like the strings are elastics?
+  // user table
+  // fix sidebar
 
+  // notify justin of schema changes
+
+
+
+
+  
   // courses should move to top layer when clicked DONE
   // Also you should be able to insert anywhere in the order DONE
 
@@ -372,4 +279,3 @@ export default function Canvas({width, height} : {width : number, height : numbe
 // style buttons correctly DONE
 // add text to buttons and resize off of that DONE
 
-// fix sidebar

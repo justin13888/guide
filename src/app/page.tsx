@@ -3,9 +3,7 @@ import Link from "next/link";
 import { LatestPost } from "~/app/_components/post";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
-
-import SideBar from "~/app/_components/sidebar";
-import Planner from "~/app/_components/planner";
+import UI from "~/app/_components/ui";
 
 export default async function Home() {
   // const hello = await api.planner.hello({ text: "from f" });
@@ -17,10 +15,7 @@ export default async function Home() {
 
   return (
     <div className="flex min-h-full absolute inset-0">
-      <div className="flex-1">
-        <Planner/>
-      </div>
-      <SideBar />
+      <UI></UI>
     </div>
   );
 }
