@@ -5,14 +5,14 @@ import {
   coursePrerequisites,
   courseProgramRestrictions,
 } from "~/server/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
   parseRequirementsDescription,
   buildPrerequisiteTree,
 } from "./step3-parse-requirements";
 import type { ApiCourse } from "./step1-fetch-course-data";
 import { ensureNonNull } from "./step1-fetch-course-data";
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -171,72 +171,30 @@ export async function insertCourseData(
   const courseId = `${transformedCourse.course.department} ${transformedCourse.course.courseNumber}`;
 
   try {
-    // Start a transaction to ensure data consistency
-    return await db.transaction(async (tx) => {
-      // 1. Insert the course
-      await tx
-        .insert(courses)
-        .values(transformedCourse.course)
-        .onConflictDoUpdate({
-          target: [courses.department, courses.courseNumber],
-          set: {
-            title: transformedCourse.course.title,
-            description: transformedCourse.course.description,
-            requirements: transformedCourse.course.requirements,
-            units: transformedCourse.course.units,
-            minLevel: transformedCourse.course.minLevel,
-            fall: transformedCourse.course.fall,
-            winter: transformedCourse.course.winter,
-            spring: transformedCourse.course.spring,
-          },
-        });
+    // Call the PostgreSQL function that handles all the transaction logic
+    await db.execute(sql`
+      SELECT insert_course_with_prerequisites(
+        ${transformedCourse.course.department},
+        ${transformedCourse.course.courseNumber},
+        ${transformedCourse.course.title},
+        ${transformedCourse.course.description},
+        ${transformedCourse.course.requirements},
+        ${transformedCourse.course.units},
+        ${transformedCourse.course.minLevel},
+        ${transformedCourse.course.fall},
+        ${transformedCourse.course.winter},
+        ${transformedCourse.course.spring},
+        ${JSON.stringify(transformedCourse.prerequisiteNodes)}::jsonb,
+        ${JSON.stringify(transformedCourse.programRestrictions)}::jsonb
+      );
+    `);
 
-      let insertedNodes = 0;
-      let insertedRestrictions = 0;
-
-      // 2. Insert prerequisite nodes if they exist
-      if (transformedCourse.prerequisiteNodes.length > 0) {
-        const nodeIds = await insertPrerequisiteNodes(
-          tx,
-          transformedCourse.prerequisiteNodes,
-        );
-        insertedNodes = nodeIds.length;
-
-        // 3. Insert course prerequisites reference
-        if (transformedCourse.coursePrerequisites) {
-          await tx
-            .insert(coursePrerequisites)
-            .values({
-              ...transformedCourse.coursePrerequisites,
-              rootNodeId: nodeIds[0]!, // First node is the root
-            })
-            .onConflictDoUpdate({
-              target: [
-                coursePrerequisites.department,
-                coursePrerequisites.courseNumber,
-              ],
-              set: {
-                rootNodeId: nodeIds[0]!,
-              },
-            });
-        }
-      }
-
-      // 4. Insert program restrictions
-      if (transformedCourse.programRestrictions.length > 0) {
-        await tx
-          .insert(courseProgramRestrictions)
-          .values(transformedCourse.programRestrictions);
-        insertedRestrictions += transformedCourse.programRestrictions.length;
-      }
-
-      return {
-        success: true,
-        courseId,
-        insertedNodes,
-        insertedRestrictions,
-      };
-    });
+    return {
+      success: true,
+      courseId,
+      insertedNodes: transformedCourse.prerequisiteNodes.length,
+      insertedRestrictions: transformedCourse.programRestrictions.length,
+    };
   } catch (error) {
     console.error(`Error inserting course ${courseId}:`, error);
     return {
@@ -248,11 +206,31 @@ export async function insertCourseData(
 }
 
 /**
- * Insert prerequisite nodes and return their IDs
- * This handles the complex tree structure with proper parent-child relationships
+ * Set up the PostgreSQL function for course insertion
+ * This needs to be run once before using insertCourseData
  */
-async function insertPrerequisiteNodes(
-  tx: any,
+export async function setupCourseInsertFunction(): Promise<void> {
+  console.log("Setting up PostgreSQL function...");
+
+  try {
+    // Read the SQL function definition
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const sqlPath = join(__dirname, "insert-courses.sql");
+    const functionSQL = readFileSync(sqlPath, "utf-8");
+
+    // Execute the function creation
+    await db.execute(sql.raw(functionSQL));
+    console.log("✅ PostgreSQL function created successfully");
+  } catch (error) {
+    console.error("❌ Error setting up PostgreSQL function:", error);
+    throw error;
+  }
+}
+
+// Refactored: Insert prerequisite nodes and return their IDs using raw SQL
+async function insertPrerequisiteNodesSQL(
+  db: any,
   nodes: TransformedCourse["prerequisiteNodes"],
 ): Promise<number[]> {
   const nodeIds: number[] = [];
@@ -264,18 +242,16 @@ async function insertPrerequisiteNodes(
     const tempId = i + 1; // Temporary ID based on array index
 
     // Insert the node
-    const [insertedNode] = await tx
-      .insert(prerequisiteNodes)
-      .values({
-        parentId: null, // We'll update this in the second pass
-        relationType: node.relationType,
-        department: node.department,
-        courseNumber: node.courseNumber,
-        minGrade: node.minGrade,
-      })
-      .returning({ id: prerequisiteNodes.id });
-
-    const realId = insertedNode.id;
+    const result = await db.execute(sql`
+      INSERT INTO prerequisite_nodes (
+        parent_id, relation_type, department, course_number, min_grade
+      ) VALUES (
+        NULL, ${node.relationType}, ${node.department}, ${node.courseNumber}, ${node.minGrade}
+      )
+      RETURNING id
+    `);
+    // Drizzle returns rows as array of objects
+    const realId = result[0].id;
     nodeIds.push(realId);
     tempIdToRealId.set(tempId, realId);
   }
@@ -289,10 +265,11 @@ async function insertPrerequisiteNodes(
     if (node.parentId !== null) {
       const realParentId = tempIdToRealId.get(node.parentId);
       if (realParentId) {
-        await tx
-          .update(prerequisiteNodes)
-          .set({ parentId: realParentId })
-          .where(eq(prerequisiteNodes.id, realId));
+        await db.execute(sql`
+          UPDATE prerequisite_nodes
+          SET parent_id = ${realParentId}
+          WHERE id = ${realId}
+        `);
       }
     }
   }
@@ -365,15 +342,25 @@ export async function insertCourseDataBatch(
 export async function clearExistingCourseData(): Promise<void> {
   console.log("Clearing existing course data...");
 
-  await db.transaction(async (tx) => {
-    // Delete in order to respect foreign key constraints
-    await tx.delete(coursePrerequisites);
-    await tx.delete(prerequisiteNodes);
-    await tx.delete(courseProgramRestrictions);
-    await tx.delete(courses);
-  });
+  try {
+    // Start a transaction using raw SQL
+    await db.execute(sql`BEGIN TRANSACTION`);
 
-  console.log("Existing course data cleared successfully");
+    // Delete in order to respect foreign key constraints
+    await db.execute(sql`DELETE FROM course_prerequisites`);
+    await db.execute(sql`DELETE FROM prerequisite_nodes`);
+    await db.execute(sql`DELETE FROM course_program_restrictions`);
+    await db.execute(sql`DELETE FROM courses`);
+
+    // Commit the transaction
+    await db.execute(sql`COMMIT`);
+    console.log("Existing course data cleared successfully");
+  } catch (error) {
+    // Rollback the transaction on error
+    await db.execute(sql`ROLLBACK`);
+    console.error("Error clearing existing course data:", error);
+    throw error;
+  }
 }
 
 /**
