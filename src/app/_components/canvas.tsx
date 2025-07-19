@@ -267,7 +267,7 @@ export default function Canvas({width, height} : {width : number, height : numbe
 
 
 
-  
+
   // courses should move to top layer when clicked DONE
   // Also you should be able to insert anywhere in the order DONE
 

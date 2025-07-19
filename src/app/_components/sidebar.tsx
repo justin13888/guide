@@ -2,6 +2,7 @@
 import { Search } from '@geist-ui/icons'
 import { useEffect, useState, useContext } from 'react';
 import { CourseContext, CourseModel } from './ui';
+import { ColorRing } from 'react-loader-spinner'
 
 type ButtonStyles = {
     active: string;
@@ -52,26 +53,26 @@ type Department = {
 //      pnpm run dev
 
 const buttonStyles: ColorMapping = {
-    'CS': {
-        active: 'bg-red-100 border-red-400 text-red-700',
-        inactive: 'border-red-400 hover:bg-red-50 text-red-600'
-    },
-    'MATH': {
-        active: 'bg-blue-100 border-blue-400 text-blue-700',
-        inactive: 'border-blue-400 hover:bg-blue-50 text-blue-600'
-    },
-    'ECE': {
-        active: 'bg-green-100 border-green-400 text-green-700',
-        inactive: 'border-green-400 hover:bg-green-50 text-green-600'
-    },
-    'PSYCH': {
-        active: 'bg-purple-100 border-purple-400 text-purple-700',
-        inactive: 'border-purple-400 hover:bg-purple-50 text-purple-600'
-    },
-    'ECON': {
-        active: 'bg-orange-100 border-orange-400 text-orange-700',
-        inactive: 'border-orange-400 hover:bg-orange-50 text-orange-600'
-    }
+    // 'CS': {
+    //     active: 'bg-red-100 border-red-400 text-red-700',
+    //     inactive: 'border-red-400 hover:bg-red-50 text-red-600'
+    // },
+    // 'MATH': {
+    //     active: 'bg-blue-100 border-blue-400 text-blue-700',
+    //     inactive: 'border-blue-400 hover:bg-blue-50 text-blue-600'
+    // },
+    // 'ECE': {
+    //     active: 'bg-green-100 border-green-400 text-green-700',
+    //     inactive: 'border-green-400 hover:bg-green-50 text-green-600'
+    // },
+    // 'PSYCH': {
+    //     active: 'bg-purple-100 border-purple-400 text-purple-700',
+    //     inactive: 'border-purple-400 hover:bg-purple-50 text-purple-600'
+    // },
+    // 'ECON': {
+    //     active: 'bg-orange-100 border-orange-400 text-orange-700',
+    //     inactive: 'border-orange-400 hover:bg-orange-50 text-orange-600'
+    // }
 } as const;
 
 const defaultStyles: ButtonStyles = {
@@ -157,9 +158,20 @@ export default function SideBar() {
 
     }
 
+
+    useEffect(()=> {
+        setActiveOption('')
+        setSelectedOptions(search === "" ? [] : options
+        .filter(option => 
+            option.toLowerCase().includes(search.toLowerCase())
+        )
+        .slice(0, 5)
+        )
+    },[search])
+
     return (
         <div className="w-[400px] h-full bg-white border-l-2 border-b-2 border-gray-200 flex flex-col">
-            <div className="px-[24px] pt-[24px] pb-2">
+            <div className="px-[24px] py-[24px] border-b-2 border-gray-200">
                 <div className="relative">
                     <input 
                         type="text" 
@@ -176,66 +188,37 @@ export default function SideBar() {
                         }}
                     />
                     <Search className="absolute left-3 top-2.5" size={20} stroke="#D1D5DB" />
-                    {search.length > 0 && isOpen && (
-                        <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-400 rounded-lg">
-                            {options
-                                .filter(option => 
-                                    option.toLowerCase().includes(search.toLowerCase())
-                                )
-                                .slice(0, 5)
-                                .length > 0 ? (
-                                    options
-                                        .filter(option => 
-                                            option.toLowerCase().includes(search.toLowerCase())
-                                        )
-                                        .slice(0, 5)
-                                        .map((option) => (
-                                            <div 
-                                                key={option} 
-                                                className="py-2 px-4 hover:bg-gray-50 cursor-pointer first:rounded-t-lg last:rounded-b-lg"
-                                                onMouseDown={(e) => {
-                                                    e.preventDefault();
-                                                    if (!selectedOptions.includes(option)) {
-                                                        setSelectedOptions([...selectedOptions, option]);
-                                                    }
-                                                    setSearch('');
-                                                    setIsOpen(false);
-                                                }}
-                                            >
-                                                {option}
-                                            </div>
-                                        ))
-                                ) : (
-                                    <div className="py-2 px-4 text-gray-500 first:rounded-t-lg last:rounded-b-lg">
-                                        No courses found matching "{search}"
-                                    </div>
-                                )}
-                        </div>
-                    )}
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                    {selectedOptions.map((option) => {
-                        const styles = getButtonStyles(option);
-                        return (
-                            <button
-                                key={option}
-                                className={`px-3 py-1.5 border rounded-lg transition-colors ${
-                                    activeOption === option ? styles.active : styles.inactive
-                                }`}
-                                onClick={() => {
-                                    fetchCourseDetails(option);
-                                    setActiveOption(activeOption === option ? '' : option);
-                                }}
-                            >
-                                {option}
-                            </button>
-                        );
-                    })}
-                </div>
-                <hr className="mt-4 -mx-8 border-t-2 border-gray-200" />
+                {search !== "" && (
+                    selectedOptions.length > 0 ? 
+                    <div className="mt-[12px] flex flex-wrap gap-2">
+                        {selectedOptions.map((option) => {
+                            const styles = getButtonStyles(option);
+                            return (
+                                <button
+                                    key={option}
+                                    className={`p-[6px] border-2 text-sm rounded-[5px] border-gray-700 transition-colors ${
+                                        activeOption === option ? styles.active : styles.inactive
+                                    }`}
+                                    onClick={() => {
+                                        fetchCourseDetails(option);
+                                        setActiveOption(option);
+                                    }}
+                                >
+                                    {option}
+                                </button>
+                            );
+                        })}
+                    </div> 
+                    :
+                    <div className="mt-[12px] text-gray-500">
+                        No courses found matching search
+                    </div>
+                    )
+                }
             </div>
             <div className="flex-1 px-8 overflow-y-auto">
-                {activeOption ? (
+                {   activeOption && 
                     <div className="py-4">
                         {(() => {
                             const course = courses[activeOption];
@@ -251,6 +234,11 @@ export default function SideBar() {
                                                 Add Course
                                             </button>
                                         </div>
+                                        {
+                                            course.name == "" && <div className='flex justify-center'>
+                                                <ColorRing  visible={true} height="50" width="50"  colors={['black', 'black', 'black', 'black', 'black']}></ColorRing>
+                                            </div>
+                                        }
                                         <h3 className="font-medium text-sm text-gray-900 mt-1">{course.name}</h3>
                                         <p className="text-sm text-gray-600 mt-2">{course.description}</p>
                                         {course.requirements.length > 0 && (
@@ -289,21 +277,19 @@ export default function SideBar() {
                             return <p className="text-gray-600">No course information available</p>;
                         })()}
                     </div>
-                )
-                :
-                <div className="py-4">
-                    <h2 className='pb-4'>Use the search bar to find a course!</h2>
-                    <h2>Departments</h2>
-                {
-                    departments.map(item => <div key={item.department} className='flex'>
-                        <div className='w-24'>{item.department}</div>
-                        <div>{item.count}</div>
-                    </div>)
-                    
-                }
-                </div>
                 }
             </div>
         </div>
     )
 }
+
+{/* <div className="py-4">
+    <h2 className='pb-4'>Use the search bar to find a course!</h2>
+    <h2>Departments</h2>
+{
+    departments.map(item => <div key={item.department} className='flex'>
+        <div className='w-24'>{item.department}</div>
+        <div>{item.count}</div>
+    </div>)
+    
+} */}
