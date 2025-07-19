@@ -8,6 +8,7 @@ import {
   clearExistingCourseData,
   getInsertionStats,
   transformCourseDataBatch,
+  setupCourseInsertFunction,
 } from "./step4-insert-database";
 import fs from "fs/promises";
 import path from "path";
@@ -48,6 +49,10 @@ export async function importCourses(
   );
 
   try {
+    // Step 0: Set up the PostgreSQL function (if not already exists)
+    console.log("🔧 Setting up PostgreSQL function...");
+    await setupCourseInsertFunction();
+
     // Step 1: Clear existing data if requested
     if (clearExisting) {
       await clearExistingCourseData();
