@@ -1,8 +1,9 @@
 'use client'
-import { Search } from '@geist-ui/icons'
+import { Search, Sliders } from '@geist-ui/icons'
 import { useEffect, useState, useContext } from 'react';
 import { CourseContext, CourseModel } from './ui';
 import { ColorRing } from 'react-loader-spinner'
+import FilterButton from './filterButton';
 
 type ButtonStyles = {
     active: string;
@@ -48,8 +49,8 @@ type Department = {
 // TODO: Some kind of visual?
 
 // RUN: docker compose up
-//      pnpm run db:push
-//      pnpm seed
+//      pnpm run import-courses
+//      pnpm install
 //      pnpm run dev
 
 const buttonStyles: ColorMapping = {
@@ -88,6 +89,19 @@ export default function SideBar() {
     const [activeOption, setActiveOption] = useState<string>('');
     const [courses, setCourses] = useState<CoursesState>({});
     const [departments, setDepartments] = useState<Array<Department>>([]);
+    const [filtersOpen, setFiltersOpen] = useState(false);
+    const [fallSelected, setFallSelected] = useState(false);
+    const [winterSelected, setWinterSelected] = useState(false);
+    const [springSelected, setSpringSelected] = useState(false);
+    const [level1xxSelected, setLevel1xxSelected] = useState(false);
+    const [level2xxSelected, setLevel2xxSelected] = useState(false);
+    const [level3xxSelected, setLevel3xxSelected] = useState(false);
+    const [level4xxSelected, setLevel4xxSelected] = useState(false);
+    const [level5xxSelected, setLevel5xxSelected] = useState(false);
+    const [level6xxSelected, setLevel6xxSelected] = useState(false);
+    const [level7xxSelected, setLevel7xxSelected] = useState(false);
+    const [level8xxSelected, setLevel8xxSelected] = useState(false);
+    const [level9xxSelected, setLevel9xxSelected] = useState(false);
 
     const setPlannerCourses = useContext(CourseContext)?.setCourses;
     
@@ -158,6 +172,70 @@ export default function SideBar() {
 
     }
 
+    const handleFilterButton = async () => {
+        if (!filtersOpen) {
+            setFiltersOpen(true);
+        } else {
+            handleSaveFilters();
+        }
+    }
+
+    const handleSaveFilters = async () => {
+        let queryString = '';
+
+        if (fallSelected) {
+            queryString += 'fall=true&';
+        } else {
+            queryString += 'fall=false&';
+        }
+        if (winterSelected) {
+            queryString += 'winter=true&';
+        } else {
+            queryString += 'winter=false&';
+        }
+        if (springSelected) {
+            queryString += 'spring=true&';
+        } else {
+            queryString += 'spring=false&';
+        }
+        
+        queryString += 'levels=';
+        if (level1xxSelected) queryString += '1%,';
+        if (level2xxSelected) queryString += '2%,';
+        if (level3xxSelected) queryString += '3%,';
+        if (level4xxSelected) queryString += '4%,';
+        if (level5xxSelected) queryString += '5%,';
+        if (level6xxSelected) queryString += '6%,';
+        if (level7xxSelected) queryString += '7%,';
+        if (level8xxSelected) queryString += '8%,';
+        if (level9xxSelected) queryString += '9%,';
+        
+        if (queryString.endsWith(',')) {
+            queryString = queryString.slice(0, -1);
+        }
+        
+        try {
+            const response = await fetch(`/api/courses/filter?${queryString}`);
+            const data = await response.json();
+            const transformedCourses: CoursesState = {};
+            data.forEach((course: any) => {
+              const code = `${course.department} ${course.course_number}`;
+              transformedCourses[code] = {
+                name: '',
+                code: code,
+                description: '',
+                requirements: [],
+              };
+            });
+            const courseCodes = Object.keys(transformedCourses);
+            setOptions(courseCodes);
+            setCourses(transformedCourses);
+        } catch (error) {
+            console.error('Error applying filters:', error);
+        }
+        
+        setFiltersOpen(false);
+    }
 
     useEffect(()=> {
         setActiveOption('')
@@ -167,29 +245,73 @@ export default function SideBar() {
         )
         .slice(0, 5)
         )
-    },[search])
+    },[search, filtersOpen])
 
     return (
         <div className="w-[400px] h-full bg-white border-l-2 border-b-2 border-gray-200 flex flex-col">
             <div className="px-[24px] py-[24px] border-b-2 border-gray-200">
-                <div className="relative">
-                    <input 
-                        type="text" 
-                        placeholder="Search..." 
-                        className="w-full pl-10 pr-4 py-2 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-300"
-                        value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            setIsOpen(true);
-                        }}
-                        onFocus={() => setIsOpen(true)}
-                        onBlur={() => {
-                            setTimeout(() => setIsOpen(false), 100);
-                        }}
-                    />
-                    <Search className="absolute left-3 top-2.5" size={20} stroke="#D1D5DB" />
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <input 
+                            type="text" 
+                            placeholder="Search..." 
+                            className="w-full pl-10 pr-4 py-2 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-300"
+                            value={search}
+                            onChange={(e) => {
+                                setSearch(e.target.value);
+                                setIsOpen(true);
+                            }}
+                            onFocus={() => setIsOpen(true)}
+                            onBlur={() => {
+                                setTimeout(() => setIsOpen(false), 100);
+                            }}
+                        />
+                        <Search className="absolute left-3 top-2.5" size={20} stroke="#D1D5DB" />
+                    </div>
+                    <button 
+                        className="w-11 py-2 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300 transition-colors flex items-center justify-center"
+                        onClick={handleFilterButton}
+                    >
+                        <Sliders size={16} stroke="#6B7280" />
+                    </button>
                 </div>
-                {search !== "" && (
+                {filtersOpen && (
+                    <div className="mt-[12px]">
+                        <div className="flex gap-6">
+                            <div className="flex-1">
+                                <h3 className="text-sm font-medium text-gray-700 mb-2">Term</h3>
+                                <div className="flex flex-col gap-2">
+                                    <FilterButton name="Fall" checked={fallSelected} onToggle={() => setFallSelected(!fallSelected)} />
+                                    <FilterButton name="Winter" checked={winterSelected} onToggle={() => setWinterSelected(!winterSelected)} />
+                                    <FilterButton name="Spring" checked={springSelected} onToggle={() => setSpringSelected(!springSelected)} />
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-sm font-medium text-gray-700 mb-2">Level</h3>
+                                <div className="flex flex-col gap-2">
+                                    <FilterButton name="1xx" checked={level1xxSelected} onToggle={() => setLevel1xxSelected(!level1xxSelected)} />
+                                    <FilterButton name="2xx" checked={level2xxSelected} onToggle={() => setLevel2xxSelected(!level2xxSelected)} />
+                                    <FilterButton name="3xx" checked={level3xxSelected} onToggle={() => setLevel3xxSelected(!level3xxSelected)} />
+                                    <FilterButton name="4xx" checked={level4xxSelected} onToggle={() => setLevel4xxSelected(!level4xxSelected)} />
+                                    <FilterButton name="5xx" checked={level5xxSelected} onToggle={() => setLevel5xxSelected(!level5xxSelected)} />
+                                    <FilterButton name="6xx" checked={level6xxSelected} onToggle={() => setLevel6xxSelected(!level6xxSelected)} />
+                                    <FilterButton name="7xx" checked={level7xxSelected} onToggle={() => setLevel7xxSelected(!level7xxSelected)} />
+                                    <FilterButton name="8xx" checked={level8xxSelected} onToggle={() => setLevel8xxSelected(!level8xxSelected)} />
+                                    <FilterButton name="9xx" checked={level9xxSelected} onToggle={() => setLevel9xxSelected(!level9xxSelected)} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-4 flex justify-center">
+                            <button 
+                                className="px-8 py-2 bg-gray-700 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
+                                onClick={handleSaveFilters}
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                )}
+                {search !== "" && !filtersOpen && (
                     selectedOptions.length > 0 ? 
                     <div className="mt-[12px] flex flex-wrap gap-2">
                         {selectedOptions.map((option) => {
@@ -218,7 +340,7 @@ export default function SideBar() {
                 }
             </div>
             <div className="flex-1 px-8 overflow-y-auto">
-                {   activeOption && 
+                {   activeOption && !filtersOpen &&
                     <div className="py-4">
                         {(() => {
                             const course = courses[activeOption];

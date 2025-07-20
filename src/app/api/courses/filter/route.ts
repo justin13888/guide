@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const spring = searchParams.get('spring');
     let levels = searchParams.get('levels')?.split(',');
 
-    if (!levels) {
+    if (!levels || levels[0] === '') {
         levels = ['%', '%', '%', '%', '%', '%', '%', '%', '%'];
     }
 
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
                                                     OR course_number LIKE '${levels[7]}'
                                                     OR course_number LIKE '${levels[8]}')`);
 
-    return NextResponse.json({ success: true, data: courses });
+    return NextResponse.json(courses);
   } catch (error) {
     console.error('Error fetching filtered courses:', error);
     return NextResponse.json(
