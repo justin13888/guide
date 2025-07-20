@@ -43,6 +43,13 @@
       "when": 1752879834708,
       "tag": "0005_rich_midnight",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1753052723809,
+      "tag": "0006_tidy_captain_midlands",
+      "breakpoints": true
     }
   ]
 }

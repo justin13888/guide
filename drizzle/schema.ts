@@ -119,14 +119,12 @@ export const userCourses = pgTable("user_courses", {
 	status: userCourseStatus().notNull(),
 	levelTerm: varchar("level_term", { length: 5 }),
 }, (table) => [
-	index("idx_user_courses_dept_course").using("btree", table.department.asc().nullsLast().op("text_ops"), table.courseNumber.asc().nullsLast().op("text_ops")),
-	index("idx_user_courses_user_id").using("btree", table.userId.asc().nullsLast().op("text_ops")),
 	foreignKey({
-			columns: [table.userId],
-			foreignColumns: [user.id],
-			name: "user_courses_user_id_user_id_fk"
+			columns: [table.department, table.courseNumber],
+			foreignColumns: [courses.department, courses.courseNumber],
+			name: "user_courses_course_fk"
 		}).onDelete("cascade"),
-	primaryKey({ columns: [table.userId, table.department, table.courseNumber], name: "user_courses_user_id_department_course_number_pk"}),
+	primaryKey({ columns: [table.userId, table.department, table.courseNumber], name: "user_courses_pk"}),
 ]);
 
 export const courses = pgTable("courses", {

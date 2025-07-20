@@ -6,6 +6,7 @@ import {
   integer,
   boolean,
   primaryKey,
+  foreignKey,
   index,
   real,
   pgEnum,
@@ -331,10 +332,7 @@ export const userCourseStatusEnum = pgEnum("user_course_status", [
 export const userCourses = pgTable(
   "user_courses",
   {
-    userId: varchar("user_id", { length: 255 })
-      .notNull()
-      //.references(() => users.id, { onDelete: "cascade" })
-      ,
+    userId: varchar("user_id", { length: 255 }).notNull(),
     department: varchar("department", { length: 10 }).notNull(),
     courseNumber: varchar("course_number", { length: 10 }).notNull(),
     status: userCourseStatusEnum("status").notNull(),
@@ -343,20 +341,12 @@ export const userCourses = pgTable(
   (table) => [
     primaryKey({
       columns: [table.userId, table.department, table.courseNumber],
+      name: "user_courses_pk",
     }),
-    {
-      foreignKeys: [
-        {
-          columns: [table.department, table.courseNumber],
-          foreignColumns: [courses.department, courses.courseNumber],
-          onDelete: "cascade",
-        },
-      ],
-    },
-    index("idx_user_courses_user_id").on(table.userId),
-    index("idx_user_courses_dept_course").on(
-      table.department,
-      table.courseNumber,
-    ),
+    foreignKey({
+      columns: [table.department, table.courseNumber],
+      foreignColumns: [courses.department, courses.courseNumber],
+      name: "user_courses_course_fk",
+    }).onDelete("cascade"),
   ],
 );

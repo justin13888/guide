@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { user, post, prerequisiteNodes, session, coursePrerequisites, userCourses, account } from "./schema";
+import { user, post, prerequisiteNodes, session, coursePrerequisites, courses, userCourses, account } from "./schema";
 
 export const postRelations = relations(post, ({one}) => ({
 	user: one(user, {
@@ -11,7 +11,6 @@ export const postRelations = relations(post, ({one}) => ({
 export const userRelations = relations(user, ({many}) => ({
 	posts: many(post),
 	sessions: many(session),
-	userCourses: many(userCourses),
 	accounts: many(account),
 }));
 
@@ -42,10 +41,14 @@ export const coursePrerequisitesRelations = relations(coursePrerequisites, ({one
 }));
 
 export const userCoursesRelations = relations(userCourses, ({one}) => ({
-	user: one(user, {
-		fields: [userCourses.userId],
-		references: [user.id]
+	course: one(courses, {
+		fields: [userCourses.department],
+		references: [courses.department]
 	}),
+}));
+
+export const coursesRelations = relations(courses, ({many}) => ({
+	userCourses: many(userCourses),
 }));
 
 export const accountRelations = relations(account, ({one}) => ({
