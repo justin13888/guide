@@ -171,7 +171,7 @@ export default function SideBar() {
 
     return (
         <div className="w-[400px] h-full bg-white border-l-2 border-b-2 border-gray-200 flex flex-col">
-            <div className="px-[24px] py-[24px] border-b-2 border-gray-200">
+            <div className="px-[24px] py-[24px] ">
                 <div className="relative">
                     <input 
                         type="text" 
@@ -189,96 +189,104 @@ export default function SideBar() {
                     />
                     <Search className="absolute left-3 top-2.5" size={20} stroke="#D1D5DB" />
                 </div>
-                {search !== "" && (
-                    selectedOptions.length > 0 ? 
-                    <div className="mt-[12px] flex flex-wrap gap-2">
-                        {selectedOptions.map((option) => {
-                            const styles = getButtonStyles(option);
-                            return (
-                                <button
-                                    key={option}
-                                    className={`p-[6px] border-2 text-sm rounded-[5px] border-gray-700 transition-colors ${
-                                        activeOption === option ? styles.active : styles.inactive
-                                    }`}
-                                    onClick={() => {
-                                        fetchCourseDetails(option);
-                                        setActiveOption(option);
-                                    }}
-                                >
-                                    {option}
-                                </button>
-                            );
-                        })}
-                    </div> 
+                {search !== "" ? 
+                    (
+                        selectedOptions.length > 0 ? 
+                        <div className="mt-[12px] flex flex-wrap gap-2">
+                            {selectedOptions.map((option) => {
+                                const styles = getButtonStyles(option);
+                                return (
+                                    <button
+                                        key={option}
+                                        className={`p-[6px] border-2 text-sm rounded-[5px] border-gray-700 transition-colors ${
+                                            activeOption === option ? styles.active : styles.inactive
+                                        }`}
+                                        onClick={() => {
+                                            fetchCourseDetails(option);
+                                            setActiveOption(option);
+                                        }}
+                                    >
+                                        {option}
+                                    </button>
+                                );
+                            })}
+                        </div> 
+                        :
+                        <div className="mt-[12px] text-gray-500">
+                            No courses found matching search
+                        </div>
+                    ) 
                     :
-                    <div className="mt-[12px] text-gray-500">
-                        No courses found matching search
-                    </div>
+                    (
+                        <div className="mt-[12px] flex flex-wrap gap-2 text-gray-500">
+                            <h1>Recommended Courses</h1>
+                        </div>
                     )
                 }
             </div>
-            <div className="flex-1 px-8 overflow-y-auto">
                 {   activeOption && 
-                    <div className="py-4">
-                        {(() => {
-                            const course = courses[activeOption];
-                            if (course) {
-                                return (
-                                    <>
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-xl font-medium text-gray-500">{course.code}</span>
-                                            <button 
-                                                className="px-3 py-1.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-lg transition-colors hover:cursor-pointer"
-                                                onClick={() => {setPlannerCourses && setPlannerCourses(prev => [...prev, new CourseModel(course.code, 0, 312)])}}
-                                            >
-                                                Add Course
-                                            </button>
-                                        </div>
-                                        {
-                                            course.name == "" && <div className='flex justify-center'>
-                                                <ColorRing  visible={true} height="50" width="50"  colors={['black', 'black', 'black', 'black', 'black']}></ColorRing>
+                    <div className="flex-1 px-8 overflow-y-auto border-t-2 border-gray-200">
+
+                        <div className="py-4 ">
+                            {(() => {
+                                const course = courses[activeOption];
+                                if (course) {
+                                    return (
+                                        <>
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-xl font-medium text-gray-500">{course.code}</span>
+                                                <button 
+                                                    className="px-3 py-1.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-lg transition-colors hover:cursor-pointer"
+                                                    onClick={() => {setPlannerCourses && setPlannerCourses(prev => [...prev, new CourseModel(course.code, 0, 312)])}}
+                                                >
+                                                    Add Course
+                                                </button>
                                             </div>
-                                        }
-                                        <h3 className="font-medium text-sm text-gray-900 mt-1">{course.name}</h3>
-                                        <p className="text-sm text-gray-600 mt-2">{course.description}</p>
-                                        {course.requirements.length > 0 && (
-                                            <div className="mt-3">
-                                                <h4 className="font-medium text-sm text-gray-700">Requirements:</h4>
-                                                <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
-                                                    {course.requirements.map((req, index) => (
-                                                        <li key={index}>{req}</li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-                                        {course.postrequisites && course.postrequisites.length > 0 && (
-                                            <div className="mt-3">
-                                                <h4 className="font-medium text-sm text-gray-700">Leads to:</h4>
-                                                <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
-                                                    {course.postrequisites.map((postreq, index) => (
-                                                        <li key={index}>{postreq}</li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-                                        {course.antirequisites && course.antirequisites.length > 0 && (
-                                            <div className="mt-3">
-                                                <h4 className="font-medium text-sm text-gray-700">Antirequisites:</h4>
-                                                <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
-                                                    {course.antirequisites.map((antireq, index) => (
-                                                        <li key={index}>{antireq}</li>
-                                                    ))}
-                                                </ul>
-                                            </div>
-                                        )}
-                                    </>
-                                );
-                            }
-                            return <p className="text-gray-600">No course information available</p>;
-                        })()}
+                                            {
+                                                course.name == "" && <div className='flex justify-center'>
+                                                    <ColorRing  visible={true} height="50" width="50"  colors={['black', 'black', 'black', 'black', 'black']}></ColorRing>
+                                                </div>
+                                            }
+                                            <h3 className="font-medium text-sm text-gray-900 mt-1">{course.name}</h3>
+                                            <p className="text-sm text-gray-600 mt-2">{course.description}</p>
+                                            {course.requirements.length > 0 && (
+                                                <div className="mt-3">
+                                                    <h4 className="font-medium text-sm text-gray-700">Requirements:</h4>
+                                                    <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
+                                                        {course.requirements.map((req, index) => (
+                                                            <li key={index}>{req}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                            {course.postrequisites && course.postrequisites.length > 0 && (
+                                                <div className="mt-3">
+                                                    <h4 className="font-medium text-sm text-gray-700">Leads to:</h4>
+                                                    <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
+                                                        {course.postrequisites.map((postreq, index) => (
+                                                            <li key={index}>{postreq}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                            {course.antirequisites && course.antirequisites.length > 0 && (
+                                                <div className="mt-3">
+                                                    <h4 className="font-medium text-sm text-gray-700">Antirequisites:</h4>
+                                                    <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
+                                                        {course.antirequisites.map((antireq, index) => (
+                                                            <li key={index}>{antireq}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                }
+                                return <p className="text-gray-600">No course information available</p>;
+                            })()}
+                        </div>
                     </div>
                 }
-            </div>
         </div>
     )
 }

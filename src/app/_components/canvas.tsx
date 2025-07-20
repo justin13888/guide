@@ -52,7 +52,7 @@ function TermView({term}: {term: TermModel}) {
         width={term.width-2*term.padding} 
         height={term.innerPadding/2}
         x={term.padding} 
-        y={term.getContainerStartY()+term.insertIndex*(32+term.innerPadding)-term.innerPadding}
+        y={term.getContainerStartY()+term.insertIndex*(32+term.innerPadding)-term.innerPadding/2}
         cornerRadius={5}
       />
     </>
