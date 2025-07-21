@@ -8,7 +8,7 @@ import {
   clearExistingCourseData,
   getInsertionStats,
   transformCourseDataBatch,
-} from "./step4-insert-database";
+} from "./step4-prepare-insert";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
