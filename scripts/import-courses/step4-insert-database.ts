@@ -12,7 +12,7 @@ import {
 } from "./step3-parse-requirements";
 import type { ApiCourse } from "./step1-fetch-course-data";
 import { ensureNonNull } from "./step1-fetch-course-data";
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -163,7 +163,7 @@ export interface InsertionResult {
 }
 
 /**
- * Insert a single course with all its related data using transactions
+ * Insert a single course with all its related data
  */
 export async function insertCourseData(
   transformedCourse: TransformedCourse,
@@ -171,10 +171,7 @@ export async function insertCourseData(
   const courseId = `${transformedCourse.course.department} ${transformedCourse.course.courseNumber}`;
 
   try {
-    // Start transaction
-    await db.execute(sql`BEGIN`);
-
-    // Call the PostgreSQL function within the transaction
+    // Call the PostgreSQL function that handles all the transaction logic
     await db.execute(sql`
       SELECT insert_course_with_prerequisites(
         ${transformedCourse.course.department},
@@ -192,9 +189,6 @@ export async function insertCourseData(
       );
     `);
 
-    // Commit transaction
-    await db.execute(sql`COMMIT`);
-
     return {
       success: true,
       courseId,
@@ -202,8 +196,6 @@ export async function insertCourseData(
       insertedRestrictions: transformedCourse.programRestrictions.length,
     };
   } catch (error) {
-    // Rollback transaction on error
-    await db.execute(sql`ROLLBACK`);
     console.error(`Error inserting course ${courseId}:`, error);
     return {
       success: false,
@@ -221,82 +213,11 @@ export async function setupCourseInsertFunction(): Promise<void> {
   console.log("Setting up PostgreSQL function...");
 
   try {
-    // Define the SQL function inline
-    const functionSQL = `
-CREATE OR REPLACE FUNCTION insert_course_with_prerequisites(
-  p_department TEXT,
-  p_course_number TEXT,
-  p_title TEXT,
-  p_description TEXT,
-  p_requirements TEXT,
-  p_units NUMERIC,
-  p_min_level TEXT,
-  p_fall BOOLEAN,
-  p_winter BOOLEAN,
-  p_spring BOOLEAN,
-  p_prerequisite_nodes JSONB,
-  p_program_restrictions JSONB
-) RETURNS VOID AS $$
-DECLARE
-  root_node_id INTEGER;
-  node_data JSONB;
-BEGIN
-  -- Insert or update the course
-  INSERT INTO courses (
-    department, course_number, title, description, requirements, units, min_level, fall, winter, spring
-  ) VALUES (
-    p_department, p_course_number, p_title, p_description, p_requirements, p_units, p_min_level, p_fall, p_winter, p_spring
-  )
-  ON CONFLICT (department, course_number) DO UPDATE SET
-    title = EXCLUDED.title,
-    description = EXCLUDED.description,
-    requirements = EXCLUDED.requirements,
-    units = EXCLUDED.units,
-    min_level = EXCLUDED.min_level,
-    fall = EXCLUDED.fall,
-    winter = EXCLUDED.winter,
-    spring = EXCLUDED.spring;
-
-  -- Insert prerequisite nodes if they exist
-  IF p_prerequisite_nodes IS NOT NULL AND jsonb_array_length(p_prerequisite_nodes) > 0 THEN
-    -- Insert prerequisite nodes and get the first one's ID as root
-    WITH inserted_nodes AS (
-      INSERT INTO prerequisite_nodes (parent_id, relation_type, department, course_number, min_grade)
-      SELECT 
-        NULL,
-        (value->>'relationType')::relation_type,
-        value->>'department',
-        value->>'courseNumber',
-        (value->>'minGrade')::INTEGER
-      FROM jsonb_array_elements(p_prerequisite_nodes)
-      RETURNING id, department, course_number
-    )
-    SELECT id INTO root_node_id FROM inserted_nodes LIMIT 1;
-    
-    -- Insert course prerequisites reference
-    INSERT INTO course_prerequisites (department, course_number, root_node_id)
-    VALUES (p_department, p_course_number, root_node_id)
-    ON CONFLICT (department, course_number) DO UPDATE SET
-      root_node_id = EXCLUDED.root_node_id;
-  END IF;
-
-  -- Insert program restrictions if they exist
-  IF p_program_restrictions IS NOT NULL AND jsonb_array_length(p_program_restrictions) > 0 THEN
-    INSERT INTO course_program_restrictions (department, course_number, program, min_level, restriction_type)
-    SELECT 
-      p_department,
-      p_course_number,
-      value->>'program',
-      value->>'minLevel',
-      (value->>'restrictionType')::restriction_type
-    FROM jsonb_array_elements(p_program_restrictions);
-  END IF;
-EXCEPTION
-  WHEN OTHERS THEN
-    RAISE EXCEPTION 'Error in insert_course_with_prerequisites: %', SQLERRM;
-END;
-$$ LANGUAGE plpgsql;
-    `;
+    // Read the SQL function definition
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const sqlPath = join(__dirname, "insert-courses.sql");
+    const functionSQL = readFileSync(sqlPath, "utf-8");
 
     // Execute the function creation
     await db.execute(sql.raw(functionSQL));
