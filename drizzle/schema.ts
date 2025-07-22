@@ -1,9 +1,34 @@
-import { pgTable, foreignKey, serial, integer, varchar, index, timestamp, primaryKey, text, real, boolean, pgEnum } from "drizzle-orm/pg-core"
+import { pgTable, index, foreignKey, integer, varchar, timestamp, serial, primaryKey, text, real, boolean, pgEnum } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 export const relationType = pgEnum("relation_type", ['AND', 'OR'])
 export const restrictionType = pgEnum("restriction_type", ['INCLUDE', 'EXCLUDE'])
+export const userCourseStatus = pgEnum("user_course_status", ['taken', 'planning'])
 
+
+export const post = pgTable("post", {
+	id: integer().primaryKey().generatedByDefaultAsIdentity({ name: "post_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 2147483647, cache: 1 }),
+	name: varchar({ length: 256 }),
+	createdById: varchar({ length: 255 }).notNull(),
+	createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	updatedAt: timestamp({ withTimezone: true, mode: 'string' }),
+}, (table) => [
+	index("created_by_idx").using("btree", table.createdById.asc().nullsLast().op("text_ops")),
+	index("name_idx").using("btree", table.name.asc().nullsLast().op("text_ops")),
+	foreignKey({
+			columns: [table.createdById],
+			foreignColumns: [user.id],
+			name: "post_createdById_user_id_fk"
+		}),
+]);
+
+export const user = pgTable("user", {
+	id: varchar({ length: 255 }).primaryKey().notNull(),
+	name: varchar({ length: 255 }),
+	email: varchar({ length: 255 }).notNull(),
+	emailVerified: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
+	image: varchar({ length: 255 }),
+});
 
 export const prerequisiteNodes = pgTable("prerequisite_nodes", {
 	id: serial().primaryKey().notNull(),
@@ -13,6 +38,8 @@ export const prerequisiteNodes = pgTable("prerequisite_nodes", {
 	courseNumber: varchar("course_number", { length: 10 }),
 	minGrade: integer("min_grade"),
 }, (table) => [
+	index("idx_prerequisite_nodes_dept_course").using("btree", table.department.asc().nullsLast().op("text_ops"), table.courseNumber.asc().nullsLast().op("text_ops")),
+	index("idx_prerequisite_nodes_parent_id").using("btree", table.parentId.asc().nullsLast().op("int4_ops")),
 	foreignKey({
 			columns: [table.parentId],
 			foreignColumns: [table.id],
@@ -33,35 +60,12 @@ export const session = pgTable("session", {
 		}),
 ]);
 
-export const user = pgTable("user", {
-	id: varchar({ length: 255 }).primaryKey().notNull(),
-	name: varchar({ length: 255 }),
-	email: varchar({ length: 255 }).notNull(),
-	emailVerified: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-	image: varchar({ length: 255 }),
-});
-
-export const post = pgTable("post", {
-	id: integer().primaryKey().generatedByDefaultAsIdentity({ name: "post_id_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 2147483647, cache: 1 }),
-	name: varchar({ length: 256 }),
-	createdById: varchar({ length: 255 }).notNull(),
-	createdAt: timestamp({ withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-	updatedAt: timestamp({ withTimezone: true, mode: 'string' }),
-}, (table) => [
-	index("created_by_idx").using("btree", table.createdById.asc().nullsLast().op("text_ops")),
-	index("name_idx").using("btree", table.name.asc().nullsLast().op("text_ops")),
-	foreignKey({
-			columns: [table.createdById],
-			foreignColumns: [user.id],
-			name: "post_createdById_user_id_fk"
-		}),
-]);
-
 export const coursePrerequisites = pgTable("course_prerequisites", {
 	department: varchar({ length: 10 }).notNull(),
 	courseNumber: varchar("course_number", { length: 10 }).notNull(),
 	rootNodeId: integer("root_node_id").notNull(),
 }, (table) => [
+	index("idx_course_prerequisites_root_node_id").using("btree", table.rootNodeId.asc().nullsLast().op("int4_ops")),
 	foreignKey({
 			columns: [table.rootNodeId],
 			foreignColumns: [prerequisiteNodes.id],
@@ -84,6 +88,8 @@ export const antirequisites = pgTable("antirequisites", {
 	antirequisiteDepartment: varchar("antirequisite_department", { length: 10 }).notNull(),
 	antirequisiteCourseNumber: varchar("antirequisite_course_number", { length: 10 }).notNull(),
 }, (table) => [
+	index("idx_antirequisites_antidept_anticourse").using("btree", table.antirequisiteDepartment.asc().nullsLast().op("text_ops"), table.antirequisiteCourseNumber.asc().nullsLast().op("text_ops")),
+	index("idx_antirequisites_department_course").using("btree", table.department.asc().nullsLast().op("text_ops"), table.courseNumber.asc().nullsLast().op("text_ops")),
 	primaryKey({ columns: [table.department, table.courseNumber, table.antirequisiteDepartment, table.antirequisiteCourseNumber], name: "antirequisites_department_course_number_antirequisite_departmen"}),
 ]);
 
@@ -106,6 +112,21 @@ export const courseProgramRestrictions = pgTable("course_program_restrictions", 
 	primaryKey({ columns: [table.department, table.courseNumber, table.program], name: "course_program_restrictions_department_course_number_program_pk"}),
 ]);
 
+export const userCourses = pgTable("user_courses", {
+	userId: varchar("user_id", { length: 255 }).notNull(),
+	department: varchar({ length: 10 }).notNull(),
+	courseNumber: varchar("course_number", { length: 10 }).notNull(),
+	status: userCourseStatus().notNull(),
+	levelTerm: varchar("level_term", { length: 5 }),
+}, (table) => [
+	foreignKey({
+			columns: [table.department, table.courseNumber],
+			foreignColumns: [courses.department, courses.courseNumber],
+			name: "user_courses_course_fk"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.userId, table.department, table.courseNumber], name: "user_courses_pk"}),
+]);
+
 export const courses = pgTable("courses", {
 	department: varchar({ length: 10 }).notNull(),
 	courseNumber: varchar("course_number", { length: 10 }).notNull(),
@@ -113,10 +134,10 @@ export const courses = pgTable("courses", {
 	description: text(),
 	requirements: text(),
 	units: real(),
+	minLevel: varchar("min_level", { length: 5 }),
 	fall: boolean().default(false).notNull(),
 	winter: boolean().default(false).notNull(),
 	spring: boolean().default(false).notNull(),
-	minLevel: varchar("min_level", { length: 5 }),
 }, (table) => [
 	primaryKey({ columns: [table.department, table.courseNumber], name: "courses_department_course_number_pk"}),
 ]);

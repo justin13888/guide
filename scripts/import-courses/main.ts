@@ -8,7 +8,7 @@ import {
   clearExistingCourseData,
   getInsertionStats,
   transformCourseDataBatch,
-} from "./step4-insert-database";
+} from "./step4-prepare-insert";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -186,9 +186,8 @@ Examples:
 }
 
 // Run if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
     console.error("Fatal error:", error);
     process.exit(1);
   });
-}
+

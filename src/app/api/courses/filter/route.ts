@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '~/server/db';
 
 export async function GET(request: NextRequest) {
+  
+
   try {
     const { searchParams } = new URL(request.url);
     const fall = searchParams.get('fall');
@@ -9,14 +11,14 @@ export async function GET(request: NextRequest) {
     const spring = searchParams.get('spring');
     let levels = searchParams.get('levels')?.split(',');
 
-    if (!levels) {
+    if (!levels || levels[0] === '') {
         levels = ['%', '%', '%', '%', '%', '%', '%', '%', '%'];
     }
 
     const courses = await db.execute(`SELECT department, course_number, title FROM courses
-                                        WHERE (fall = true OR fall = '${fall}')
-                                            AND (winter = true OR winter = '${winter}')
-                                            AND (spring = true OR spring= '${spring}')
+                                        WHERE (fall = true OR fall = ${fall})
+                                            AND (winter = true OR winter = ${winter})
+                                            AND (spring = true OR spring= ${spring})
                                             AND (course_number LIKE '${levels[0]}'
                                                     OR course_number LIKE '${levels[1]}'
                                                     OR course_number LIKE '${levels[2]}'
@@ -27,7 +29,7 @@ export async function GET(request: NextRequest) {
                                                     OR course_number LIKE '${levels[7]}'
                                                     OR course_number LIKE '${levels[8]}')`);
 
-    return NextResponse.json({ success: true, data: courses });
+    return NextResponse.json(courses);
   } catch (error) {
     console.error('Error fetching filtered courses:', error);
     return NextResponse.json(

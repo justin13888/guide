@@ -6,6 +6,7 @@ import {
   integer,
   boolean,
   primaryKey,
+  foreignKey,
   index,
   real,
   pgEnum,
@@ -320,5 +321,32 @@ export const corequisites = pgTable(
         },
       ],
     },
+  ],
+);
+
+export const userCourseStatusEnum = pgEnum("user_course_status", [
+  "taken",
+  "planning",
+]);
+
+export const userCourses = pgTable(
+  "user_courses",
+  {
+    userId: varchar("user_id", { length: 255 }).notNull(),
+    department: varchar("department", { length: 10 }).notNull(),
+    courseNumber: varchar("course_number", { length: 10 }).notNull(),
+    status: userCourseStatusEnum("status").notNull(),
+    levelTerm: varchar("level_term", { length: 5 }),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.userId, table.department, table.courseNumber],
+      name: "user_courses_pk",
+    }),
+    foreignKey({
+      columns: [table.department, table.courseNumber],
+      foreignColumns: [courses.department, courses.courseNumber],
+      name: "user_courses_course_fk",
+    }).onDelete("cascade"),
   ],
 );

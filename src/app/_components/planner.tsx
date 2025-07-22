@@ -28,9 +28,9 @@ export default function Planner() {
       <div className='absolute'>
         <Canvas width={dimensions.width} height={dimensions.height}></Canvas>
       </div>
-      <div className='flex flex-col gap-2 m-4'>
+      <div className='flex flex-col gap-2 m-4 z-10'>
         {/* <Home className='hover:cursor-pointer'></Home> */}
-        <Trash className=''></Trash>
+        <Trash className='hover:cursor-pointer'></Trash>
       </div>
   </div>
 }

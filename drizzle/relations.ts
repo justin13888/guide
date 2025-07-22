@@ -1,5 +1,18 @@
 import { relations } from "drizzle-orm/relations";
-import { prerequisiteNodes, user, session, post, coursePrerequisites, account } from "./schema";
+import { user, post, prerequisiteNodes, session, coursePrerequisites, courses, userCourses, account } from "./schema";
+
+export const postRelations = relations(post, ({one}) => ({
+	user: one(user, {
+		fields: [post.createdById],
+		references: [user.id]
+	}),
+}));
+
+export const userRelations = relations(user, ({many}) => ({
+	posts: many(post),
+	sessions: many(session),
+	accounts: many(account),
+}));
 
 export const prerequisiteNodesRelations = relations(prerequisiteNodes, ({one, many}) => ({
 	prerequisiteNode: one(prerequisiteNodes, {
@@ -20,24 +33,22 @@ export const sessionRelations = relations(session, ({one}) => ({
 	}),
 }));
 
-export const userRelations = relations(user, ({many}) => ({
-	sessions: many(session),
-	posts: many(post),
-	accounts: many(account),
-}));
-
-export const postRelations = relations(post, ({one}) => ({
-	user: one(user, {
-		fields: [post.createdById],
-		references: [user.id]
-	}),
-}));
-
 export const coursePrerequisitesRelations = relations(coursePrerequisites, ({one}) => ({
 	prerequisiteNode: one(prerequisiteNodes, {
 		fields: [coursePrerequisites.rootNodeId],
 		references: [prerequisiteNodes.id]
 	}),
+}));
+
+export const userCoursesRelations = relations(userCourses, ({one}) => ({
+	course: one(courses, {
+		fields: [userCourses.department],
+		references: [courses.department]
+	}),
+}));
+
+export const coursesRelations = relations(courses, ({many}) => ({
+	userCourses: many(userCourses),
 }));
 
 export const accountRelations = relations(account, ({one}) => ({

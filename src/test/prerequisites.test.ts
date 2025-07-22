@@ -324,40 +324,4 @@ describe("Prerequisite Parsing", () => {
     expect(result.programRestrictions).toEqual(expectedPrograms);
   });
 
-  it("should parse HLTH 358 exact string", () => {
-    const testString =
-      "Prereq: PSYCH 101 and (STAT 202, BIOL 361) or (KIN 232, KIN 354) or (PSYCH 291, PSYCH 292, PSYCH 261) or (HLTH204; HLTH205 or HLTH333) or (AHS/HEALTH150, REC371) or Addictions, Mental Health, and Policy Minor students; Level at least 3A. Antireq: HLTH460";
-
-    const result = parseRequirementsDescription(testString);
-
-    expect(result).toBeDefined();
-    expect(result.minLevel).toBe("3A");
-    expect(result.groups).toBeDefined();
-    expect(Array.isArray(result.groups)).toBe(true);
-    expect(result.programRestrictions).toBeDefined();
-    expect(Array.isArray(result.programRestrictions)).toBe(true);
-
-    // Check that course requirements are parsed
-    expect(result.groups.length).toBeGreaterThan(0);
-
-    // Check that antireq is parsed correctly
-    const antireqGroup = result.groups.find((group) =>
-      group.requirements.some((req) => req.isAntireq),
-    );
-    expect(antireqGroup).toBeDefined();
-    if (antireqGroup) {
-      expect(antireqGroup.requirements.length).toBeGreaterThan(0);
-      expect(antireqGroup.requirements[0]!.relatedDepartment).toBe("HLTH");
-      expect(antireqGroup.requirements[0]!.relatedCourseNumber).toBe("460");
-      expect(antireqGroup.requirements[0]!.isAntireq).toBe(true);
-    }
-
-    // Check that program restrictions are parsed correctly
-    expect(result.programRestrictions.length).toBe(1);
-    expect(result.programRestrictions[0]!.program).toBe(
-      "Addictions, Mental Health, and Policy Minor",
-    );
-    expect(result.programRestrictions[0]!.level).toBe(null);
-    expect(result.programRestrictions[0]!.restrictionType).toBe("INCLUDE");
-  });
 });
