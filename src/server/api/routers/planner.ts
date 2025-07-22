@@ -5,8 +5,8 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
-import { planSchema, type Plan, type PrerequisiteChainsResponse } from "~/models";
-import { courses } from "~/server/db/schema";
+import { planSchema, type Plan, type PrerequisiteChainsResponse, type CourseTreeResponse, type CourseTreeNode } from "~/models";
+import { courses, coursePrerequisites } from "~/server/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 
 export const plannerRouter = createTRPCRouter({
@@ -42,8 +42,8 @@ export const plannerRouter = createTRPCRouter({
   }),
 
   getPrerequisiteChains: protectedProcedure
-    .input(z.object({ 
-      department: z.string(), 
+    .input(z.object({
+      department: z.string(),
       courseNumber: z.string(),
       maxDepth: z.number().default(10).optional()
     }))
@@ -166,7 +166,7 @@ export const plannerRouter = createTRPCRouter({
       `;
 
       const rawResults = await ctx.db.execute(prerequisitePathsQuery);
-      
+
       // Group results by relationship type and process paths
       const pathsByRelation = new Map<string, Array<{
         department: string;
@@ -179,7 +179,7 @@ export const plannerRouter = createTRPCRouter({
       }>>();
 
       let maxDepthFound = 0;
-      
+
       for (const row of rawResults) {
         const dept = row.department as string;
         const courseNum = row.course_number as string;
@@ -188,15 +188,15 @@ export const plannerRouter = createTRPCRouter({
         const pathString = row.path_string as string;
         const pathArray = row.path_array as string[];
         const parentRelation = row.parent_relation as string;
-        
+
         maxDepthFound = Math.max(maxDepthFound, depth);
-        
+
         const relationKey = parentRelation || 'SINGLE';
-        
+
         if (!pathsByRelation.has(relationKey)) {
           pathsByRelation.set(relationKey, []);
         }
-        
+
         pathsByRelation.get(relationKey)!.push({
           department: dept,
           courseNumber: courseNum,
@@ -243,9 +243,9 @@ export const plannerRouter = createTRPCRouter({
             title: courseInfo.title,
             path: pathCourses,
             depth: courseInfo.depth,
-            relationContext: relationType === 'SINGLE' ? undefined : 
-              relationType === 'AND' ? 'Required (AND)' : 
-              relationType === 'OR' ? 'Alternative (OR)' : relationType,
+            relationContext: relationType === 'SINGLE' ? undefined :
+              relationType === 'AND' ? 'Required (AND)' :
+                relationType === 'OR' ? 'Alternative (OR)' : relationType,
           });
         }
       }
@@ -261,4 +261,320 @@ export const plannerRouter = createTRPCRouter({
         totalPaths: allPaths.length,
       };
     }),
+
+  // TODO: See if this replaces the getPrerequisiteChains
+  getCourseTree: publicProcedure
+    .input(z.object({
+      department: z.string(),
+      courseNumber: z.string(),
+      maxDepth: z.number().default(10).optional()
+    }))
+    .query(async ({ ctx, input }): Promise<CourseTreeResponse> => {
+      const { department, courseNumber, maxDepth = 10 } = input;
+
+      // First, check if the course exists
+      const targetCourse = await ctx.db.query.courses.findFirst({
+        where: and(
+          eq(courses.department, department),
+          eq(courses.courseNumber, courseNumber)
+        ),
+      });
+
+      if (!targetCourse) {
+        throw new Error(`Course ${department} ${courseNumber} not found`);
+      }
+
+      // DEBUG: Let's see what courses have prerequisites
+      const allPrereqs = await ctx.db.query.coursePrerequisites.findMany({
+        limit: 10,
+      });
+      console.log('DEBUG: Sample courses with prerequisites:', allPrereqs);
+
+      // Get the root prerequisite node for this course
+      const coursePrereq = await ctx.db.query.coursePrerequisites.findFirst({
+        where: and(
+          eq(coursePrerequisites.department, department),
+          eq(coursePrerequisites.courseNumber, courseNumber)
+        ),
+      });
+
+      console.log(`DEBUG: Found coursePrereq for ${department} ${courseNumber}:`, coursePrereq);
+
+      if (!coursePrereq) {
+        console.log(`DEBUG: No prerequisites found for ${department} ${courseNumber}`);
+        return {
+          targetCourse: {
+            department: targetCourse.department,
+            courseNumber: targetCourse.courseNumber,
+            title: targetCourse.title ?? undefined,
+          },
+          tree: undefined,
+          maxDepth: 0,
+          totalNodes: 0,
+          hasPrerequisites: false,
+        };
+      }
+
+      // Use a simple recursive CTE to build the tree structure
+      const treeQuery = sql`
+        WITH RECURSIVE prereq_tree AS (
+          -- Base case: Start from the root prerequisite node
+          SELECT 
+            pn.id,
+            pn.parent_id,
+            pn.relation_type,
+            pn.department,
+            pn.course_number,
+            pn.min_grade,
+            c.title,
+            0 as depth
+          FROM prerequisite_nodes pn
+          LEFT JOIN courses c ON pn.department = c.department AND pn.course_number = c.course_number
+          WHERE pn.id = ${coursePrereq.rootNodeId}
+
+          UNION ALL
+
+          -- Recursive case: Get all child nodes
+          SELECT 
+            child.id,
+            child.parent_id,
+            child.relation_type,
+            child.department,
+            child.course_number,
+            child.min_grade,
+            c.title,
+            pt.depth + 1
+          FROM prereq_tree pt
+          JOIN prerequisite_nodes child ON child.parent_id = pt.id
+          LEFT JOIN courses c ON child.department = c.department AND child.course_number = c.course_number
+          WHERE pt.depth < ${maxDepth}
+        )
+        SELECT 
+          id,
+          parent_id,
+          relation_type,
+          department,
+          course_number,
+          min_grade,
+          title,
+          depth
+        FROM prereq_tree
+        ORDER BY depth, parent_id NULLS FIRST, id;
+      `;
+
+      const rawResults = await ctx.db.execute(treeQuery);
+
+      console.log(`DEBUG: Tree query returned ${rawResults.length} rows for ${department} ${courseNumber}`);
+
+      type RawResult = {
+        id: number;
+        parent_id: number | null;
+        relation_type: 'AND' | 'OR' | null;
+        department: string | null;
+        course_number: string | null;
+        min_grade: number | null;
+        title: string | null;
+        depth: number;
+      };
+
+      const allResults = rawResults as unknown as RawResult[];
+      const nodeMap = new Map<number, CourseTreeNode>();
+      let maxDepthFound = 0;
+      let totalNodes = 0;
+
+      // Build all nodes first
+      for (const row of allResults) {
+        const nodeId = row.id;
+        const relationType = row.relation_type;
+        const dept = row.department;
+        const courseNum = row.course_number;
+        const minGrade = row.min_grade;
+        const title = row.title;
+        const depth = row.depth;
+
+        totalNodes++;
+        maxDepthFound = Math.max(maxDepthFound, depth);
+
+        const node: CourseTreeNode = {
+          id: nodeId.toString(),
+          department: dept ?? '',
+          courseNumber: courseNum ?? '',
+          title: title ?? undefined,
+          relationType: relationType ?? undefined,
+          minGrade: minGrade ?? undefined,
+          children: [],
+          depth,
+          isLeaf: dept !== null && courseNum !== null,
+        };
+
+        nodeMap.set(nodeId, node);
+      }
+
+      // Build parent-child relationships
+      let rootNode: CourseTreeNode | undefined;
+      for (const row of allResults) {
+        const nodeId = row.id;
+        const parentId = row.parent_id;
+        
+        const currentNode = nodeMap.get(nodeId);
+        if (!currentNode) continue;
+
+        if (parentId === null) {
+          rootNode = currentNode;
+        } else {
+          const parentNode = nodeMap.get(parentId);
+          if (parentNode?.children) {
+            parentNode.children.push(currentNode);
+          }
+        }
+      }
+
+      // Find course nodes and manually fetch their prerequisites one level at a time
+      const coursesToProcess: Array<{
+        department: string;
+        courseNumber: string;
+        nodeId: number;
+        depth: number;
+      }> = [];
+      
+      for (const row of allResults) {
+        if (row.department && row.course_number && row.depth < maxDepth - 1) {
+          coursesToProcess.push({
+            department: row.department,
+            courseNumber: row.course_number,
+            nodeId: row.id,
+            depth: row.depth
+          });
+        }
+      }
+
+      console.log('DEBUG: Processing course nodes for deeper prerequisites:', coursesToProcess);
+
+      // For each course, check if it has prerequisites and add them
+      for (const courseInfo of coursesToProcess) {
+        const parentNode = nodeMap.get(courseInfo.nodeId);
+        if (!parentNode) continue;
+
+        try {
+          // Check if this course has its own prerequisites
+          const subCoursePrereq = await ctx.db.query.coursePrerequisites.findFirst({
+            where: and(
+              eq(coursePrerequisites.department, courseInfo.department),
+              eq(coursePrerequisites.courseNumber, courseInfo.courseNumber)
+            ),
+          });
+
+          if (subCoursePrereq) {
+            console.log(`DEBUG: Found sub-prerequisites for ${courseInfo.department} ${courseInfo.courseNumber}`);
+            
+            // Get the prerequisite tree for this sub-course
+            const subTreeQuery = sql`
+              WITH RECURSIVE sub_prereq_tree AS (
+                SELECT 
+                  pn.id,
+                  pn.parent_id,
+                  pn.relation_type,
+                  pn.department,
+                  pn.course_number,
+                  pn.min_grade,
+                  c.title,
+                  ${courseInfo.depth + 1} as depth
+                FROM prerequisite_nodes pn
+                LEFT JOIN courses c ON pn.department = c.department AND pn.course_number = c.course_number
+                WHERE pn.id = ${subCoursePrereq.rootNodeId}
+
+                UNION ALL
+
+                SELECT 
+                  child.id,
+                  child.parent_id,
+                  child.relation_type,
+                  child.department,
+                  child.course_number,
+                  child.min_grade,
+                  c.title,
+                  spt.depth + 1
+                FROM sub_prereq_tree spt
+                JOIN prerequisite_nodes child ON child.parent_id = spt.id
+                LEFT JOIN courses c ON child.department = c.department AND child.course_number = c.course_number
+                WHERE spt.depth < ${maxDepth}
+              )
+              SELECT * FROM sub_prereq_tree ORDER BY depth, parent_id NULLS FIRST, id;
+            `;
+
+            const subResults = await ctx.db.execute(subTreeQuery);
+            console.log(`DEBUG: Found ${subResults.length} sub-prerequisite nodes for ${courseInfo.department} ${courseInfo.courseNumber}`);
+
+            // Create nodes for the sub-prerequisites
+            const subNodeMap = new Map<number, CourseTreeNode>();
+            for (const subRow of subResults) {
+              const subData = subRow as RawResult;
+              const subNodeId = subData.id;
+              
+              const subNode: CourseTreeNode = {
+                id: `${courseInfo.nodeId}-${subNodeId}`,
+                department: subData.department ?? '',
+                courseNumber: subData.course_number ?? '',
+                title: subData.title ?? undefined,
+                relationType: subData.relation_type ?? undefined,
+                minGrade: subData.min_grade ?? undefined,
+                children: [],
+                depth: subData.depth,
+                isLeaf: subData.department !== null && subData.course_number !== null,
+              };
+
+              subNodeMap.set(subNodeId, subNode);
+              totalNodes++;
+              maxDepthFound = Math.max(maxDepthFound, subData.depth);
+            }
+
+            // Build parent-child relationships for sub-tree
+            let subRootNode: CourseTreeNode | undefined;
+            for (const subRow of subResults) {
+              const subData = subRow as RawResult;
+              const subNodeId = subData.id;
+              const subParentId = subData.parent_id;
+              
+              const currentSubNode = subNodeMap.get(subNodeId);
+              if (!currentSubNode) continue;
+
+              if (subParentId === null) {
+                subRootNode = currentSubNode;
+              } else {
+                const parentSubNode = subNodeMap.get(subParentId);
+                if (parentSubNode?.children) {
+                  parentSubNode.children.push(currentSubNode);
+                }
+              }
+            }
+
+            // Add the sub-tree root to the parent node
+            if (subRootNode && parentNode.children) {
+              parentNode.children.push(subRootNode);
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching prerequisites for ${courseInfo.department} ${courseInfo.courseNumber}:`, error);
+        }
+      }
+
+      console.log(`DEBUG: Built tree with root:`, rootNode ? {
+        id: rootNode.id,
+        dept: rootNode.department,
+        courseNum: rootNode.courseNumber,
+        childrenCount: rootNode.children?.length ?? 0
+      } : 'NO ROOT');
+
+      return {
+        targetCourse: {
+          department: targetCourse.department,
+          courseNumber: targetCourse.courseNumber,
+          title: targetCourse.title ?? undefined,
+        },
+        tree: rootNode,
+        maxDepth: maxDepthFound,
+        totalNodes,
+        hasPrerequisites: true,
+      };
+    }), // TODO: Finalize this ^^
 });

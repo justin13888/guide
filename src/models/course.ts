@@ -45,14 +45,14 @@ const baseRequirementSchema = z.discriminatedUnion('type', [
 ]);
 
 // 7. Forward declaration for recursive requirements
-type RequirementSchemaType = z.infer<typeof baseRequirementSchema> | 
-  { type: 'and', requirements: RequirementSchemaType[] } | 
-  { type: 'or', requirements: RequirementSchemaType[] } | 
-  { type: 'one-of-n', count: number, options: RequirementSchemaType[] } |
-  { type: 'excluding', excluded: { code: string; subject: string; }[], inclusive?: { code: string; subject: string; }[] } |
-  { type: 'prerequisite', course: { code: string; subject: string; }, prerequisite: RequirementSchemaType } |
-  { type: 'corequisite', course: { code: string; subject: string; }, corequisite: RequirementSchemaType } |
-  { type: 'level-completion', level: string, description?: string };
+type RequirementSchemaType = z.infer<typeof baseRequirementSchema> |
+{ type: 'and', requirements: RequirementSchemaType[] } |
+{ type: 'or', requirements: RequirementSchemaType[] } |
+{ type: 'one-of-n', count: number, options: RequirementSchemaType[] } |
+{ type: 'excluding', excluded: { code: string; subject: string; }[], inclusive?: { code: string; subject: string; }[] } |
+{ type: 'prerequisite', course: { code: string; subject: string; }, prerequisite: RequirementSchemaType } |
+{ type: 'corequisite', course: { code: string; subject: string; }, corequisite: RequirementSchemaType } |
+{ type: 'level-completion', level: string, description?: string };
 
 // 8. Full Requirement Schema (recursive for complex conditions)
 const requirementSchema: z.ZodSchema<RequirementSchemaType> = z.lazy(() =>
@@ -111,3 +111,43 @@ export const prerequisiteChainsResponseSchema = z.object({
   totalPaths: z.number(),
 });
 export type PrerequisiteChainsResponse = z.infer<typeof prerequisiteChainsResponseSchema>;
+
+// Course tree node types for tree visualization
+export type CourseTreeNode = {
+  id: string;
+  department: string;
+  courseNumber: string;
+  title?: string;
+  relationType?: 'AND' | 'OR';
+  minGrade?: number;
+  children?: CourseTreeNode[];
+  depth: number;
+  isLeaf: boolean;
+};
+
+export const courseTreeNodeSchema: z.ZodSchema<CourseTreeNode> = z.lazy(() =>
+  z.object({
+    id: z.string(),
+    department: z.string(),
+    courseNumber: z.string(),
+    title: z.string().optional(),
+    relationType: z.enum(['AND', 'OR']).optional(),
+    minGrade: z.number().optional(),
+    children: z.array(courseTreeNodeSchema).optional(),
+    depth: z.number(),
+    isLeaf: z.boolean(),
+  })
+);
+
+export const courseTreeResponseSchema = z.object({
+  targetCourse: z.object({
+    department: z.string(),
+    courseNumber: z.string(),
+    title: z.string().optional(),
+  }),
+  tree: courseTreeNodeSchema.optional(),
+  maxDepth: z.number(),
+  totalNodes: z.number(),
+  hasPrerequisites: z.boolean(),
+});
+export type CourseTreeResponse = z.infer<typeof courseTreeResponseSchema>;

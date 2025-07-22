@@ -5,11 +5,20 @@ import { auth } from '~/server/auth';
 export default async function NavBar() {
     const session = await auth();
 
-
     return (
         <nav className="bg-white w-full h-[60px] px-8 flex items-center justify-between border-b-2 border-gray-200">
-            <div className="text-l font-semibold">
-                UWGuide
+            <div className="flex items-center gap-8">
+                <Link href="/" className="text-l font-semibold hover:text-blue-600 transition-colors">
+                    UWGuide
+                </Link>
+                <div className="flex gap-6 text-sm">
+                    <Link href="/tree" className="text-gray-600 hover:text-blue-600 transition-colors">
+                        Course Tree
+                    </Link>
+                    <Link href="/prerequisite-paths" className="text-gray-600 hover:text-blue-600 transition-colors">
+                        Prerequisites
+                    </Link>
+                </div>
             </div>
             <div className="border border-gray-300 rounded-full p-2">
                 <User size={12} fill="#E5E7EB" stroke="#E5E7EB" />
