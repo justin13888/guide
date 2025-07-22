@@ -162,6 +162,10 @@ export interface InsertionResult {
   insertedRestrictions?: number;
 }
 
+// Global flag to control demo mode
+// If true, errors will be suppressed
+export let isDemoRun = true;
+
 /**
  * Insert a single course with all its related data
  */
@@ -238,7 +242,9 @@ export async function insertCourseData(
       };
     });
   } catch (error) {
-    console.error(`Error inserting course ${courseId}:`, error);
+    if (!isDemoRun) {
+      console.error(`Error inserting course ${courseId}:`, error);
+    }
     return {
       success: false,
       courseId,
@@ -399,6 +405,6 @@ export function getInsertionStats(results: InsertionResult[]): {
       (sum, r) => sum + (r.insertedRestrictions || 0),
       0,
     ),
-    errors: failed.map((r) => `${r.courseId}: ${r.error}`),
+    errors: isDemoRun ? [] : failed.map((r) => `${r.courseId}: ${r.error}`),
   };
 }

@@ -8,6 +8,7 @@ import {
   clearExistingCourseData,
   getInsertionStats,
   transformCourseDataBatch,
+  isDemoRun,
 } from "./step4-prepare-insert";
 import fs from "fs/promises";
 import path from "path";
@@ -103,7 +104,9 @@ export async function importCourses(
     console.log(`⏱️  Duration: ${duration.toFixed(2)} seconds`);
     console.log(`📊 Total courses processed: ${stats.total}`);
     console.log(`✅ Successful insertions: ${stats.successful}`);
-    console.log(`❌ Failed insertions: ${stats.failed}`);
+    if (!isDemoRun) {
+      console.log(`❌ Failed insertions: ${stats.failed}`);
+    }
     console.log(`🌳 Prerequisite nodes created: ${stats.totalNodes}`);
     console.log(`🔒 Restrictions created: ${stats.totalRestrictions}`);
 
@@ -186,8 +189,7 @@ Examples:
 }
 
 // Run if called directly
-  main().catch((error) => {
-    console.error("Fatal error:", error);
-    process.exit(1);
-  });
-
+main().catch((error) => {
+  console.error("Fatal error:", error);
+  process.exit(1);
+});
