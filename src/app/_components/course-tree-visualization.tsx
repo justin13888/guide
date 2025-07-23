@@ -115,7 +115,7 @@ const CourseTreeVisualization: React.FC<CourseTreeVisualizationProps> = ({ tree 
                 </div>
 
                 {/* Legend */}
-                <div className="mt-12 pt-6 border-t border-gray-200">
+                {/* <div className="mt-12 pt-6 border-t border-gray-200">
                     <h3 className="text-sm font-medium text-gray-700 mb-3">Legend:</h3>
                     <div className="flex flex-wrap gap-4 text-xs">
                         <div className="flex items-center gap-2">
@@ -139,7 +139,7 @@ const CourseTreeVisualization: React.FC<CourseTreeVisualizationProps> = ({ tree 
                             <span>OR (Any One)</span>
                         </div>
                     </div>
-                </div>
+                </div> */}
             </div>
         </div>
     );
