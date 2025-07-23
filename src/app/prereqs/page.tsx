@@ -23,10 +23,18 @@ type PrereqRow = {
 export default function PrereqsPage() {
     const [department, setDepartment] = useState("");
     const [courseNumber, setCourseNumber] = useState("");
+    const [submittedDepartment, setSubmittedDepartment] = useState("");
+    const [submittedCourseNumber, setSubmittedCourseNumber] = useState("");
     const query = api.prereqsWithOfferings.getCoursePrereqs.useQuery({
-        department,
-        courseNumber,
+        department: submittedDepartment,
+        courseNumber: submittedCourseNumber,
     });
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmittedDepartment(department);
+        setSubmittedCourseNumber(courseNumber);
+    };
 
     const columns: ColumnDef<PrereqRow>[] = [
         {
@@ -76,7 +84,7 @@ export default function PrereqsPage() {
     return (
         <div className="max-w-2xl mx-auto p-8">
             <h1 className="text-2xl font-bold mb-4">Test Prerequisite Query</h1>
-            <form onSubmit={e => { e.preventDefault(); }} className="mb-6 flex gap-2">
+            <form onSubmit={handleSubmit} className="mb-6 flex gap-2">
                 <input
                     type="text"
                     placeholder="Department (e.g. MATH)"
