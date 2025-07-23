@@ -29,7 +29,7 @@ export default function Planner() {
         <Canvas width={dimensions.width} height={dimensions.height}/>
       </div>
       <div className='flex flex-col gap-2 m-4 z-10'>
-        <Home className='hover:cursor-pointer'></Home>
+        {/* <Home className='hover:cursor-pointer'></Home> */}
         <Trash className='hover:cursor-pointer'></Trash>
       </div>
   </div>
