@@ -62,7 +62,32 @@ CREATE INDEX idx_antirequisites_department_course
 CREATE INDEX idx_antirequisites_antidept_anticourse
     ON antirequisites (antirequisite_department, antirequisite_course_number);
 
+--> Indices for Basic Feature 5
+CREATE INDEX IF NOT EXISTS idx_user_courses_dept_course ON user_courses(department, course_number);
+CREATE INDEX IF NOT EXISTS idx_user_courses_userid_levelterm ON user_courses(user_id, level_term);
+CREATE INDEX IF NOT EXISTS idx_courses_dept_course ON courses(department, course_number);
+
 --> Basic Feature 5
+SELECT
+  uc.user_id,
+  uc.level_term,
+  COUNT(*) AS num_courses,
+  SUM(CASE WHEN c.department <> 'PD' THEN c.units ELSE 0 END) AS total_units_excl_pd,
+  CASE
+    WHEN uc.level_term IN ('1A','1B','2A','2B','3A','3B','4A','4B') AND COUNT(*) > 7
+      THEN 'TOO MANY COURSES'
+    WHEN uc.level_term NOT IN ('1A','1B','2A','2B','3A','3B','4A','4B') AND SUM(CASE WHEN c.department <> 'PD' THEN c.units ELSE 0 END) > 0.5
+      THEN 'TOO MANY UNITS'
+    ELSE 'OK'
+  END AS load_status
+FROM user_courses uc
+JOIN courses c
+  ON uc.department = c.department AND uc.course_number = c.course_number
+GROUP BY uc.user_id, uc.level_term
+ORDER BY uc.user_id, uc.level_term;
+
+
+--> Fancy Feature 1
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_prerequisite_nodes_parent_id ON prerequisite_nodes(parent_id);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_prerequisite_nodes_dept_course ON prerequisite_nodes(department, course_number);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_course_prerequisites_dept_course ON course_prerequisites(department, course_number);
@@ -187,9 +212,6 @@ CREATE INDEX IF NOT EXISTS idx_courses_dept_course
     ON courses(department, course_number);
 
 --> Fancy Feature 5
--- This query gets all prerequisites for STAT 231, including any nested ones,
--- and shows when each course is offered.
-
 WITH RECURSIVE prereq_base (
   id, department, course_number, min_grade, path
 ) AS (

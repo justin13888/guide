@@ -61,6 +61,13 @@ department                  course_number           title
 STAT			            221			          	Applied Statistics
 STAT			            241			        	Applied Statistics II
 
+--> Basic Feature 5 Output
+
+user_id     level_term      num_courses      total_units_excl_pd      load_status   
+------------------------------------------------------------------------------------
+master          1A                2                   1                     OK
+master          1B                2                   1                     OK
+master          W1                2                   1              TOO MANY UNITS
 
 --> Fancy Feature 5 Output
 

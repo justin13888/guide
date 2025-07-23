@@ -99,8 +99,9 @@ export class TermModel {
   hovered: boolean;
   insertIndex: number;
   courses: Array<string>;
+  color: string;
 
-  constructor(name: string, x: number, y: number, containerHeight: number = 0, hovered: boolean = false, width: number = 120, height: number = 300, fontSize: number = 12, padding: number = 12, borderWidth: number = 1, innerPadding: number = 6, marginRight: number = 12, insertIndex: number = 0) {
+  constructor(name: string, x: number, y: number, containerHeight: number = 0, hovered: boolean = false, width: number = 120, height: number = 300, fontSize: number = 12, padding: number = 12, borderWidth: number = 1, innerPadding: number = 6, marginRight: number = 12, insertIndex: number = 0, color = "#EDEDED") {
     this.name = name;
     this.x = x;
     this.y = y;
@@ -115,6 +116,7 @@ export class TermModel {
     this.hovered = hovered;
     this.insertIndex = insertIndex;
     this.courses = [];
+    this.color = color;
   }
 
   getFullWidth() {
@@ -131,7 +133,7 @@ export class TermModel {
   }
 
   clone() {
-    const clone = new TermModel(this.name, this.x, this.y, this.containerHeight, this.hovered, this.width, this.height, this.fontSize, this.padding, this.borderWidth, this.innerPadding, this.marginRight, this.insertIndex)
+    const clone = new TermModel(this.name, this.x, this.y, this.containerHeight, this.hovered, this.width, this.height, this.fontSize, this.padding, this.borderWidth, this.innerPadding, this.marginRight, this.insertIndex, this.color)
     clone.courses = [...this.courses];
     return clone;
   }
@@ -171,6 +173,7 @@ export default function UI() {
   const [terms, setTerms] = useState<TermModel[]>(getInitialTerms());
   const [courses, setCourses] = useState<CourseModel[]>([]);
   const [activeOption, setActiveOption] = useState<string>('');
+
 
   useEffect(() => {
     TERM_NAMES.forEach(async (name: string) => {
