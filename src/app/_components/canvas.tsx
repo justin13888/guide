@@ -13,10 +13,30 @@ import { CourseModel, TermModel, CourseContext } from './ui';
 
 
 function TermView({term}: {term: TermModel}) {
+  // const [color, setColor] = useState<string>("#EDEDED");
+  // //const prevCoursesLength = useRef(0);
+  // useEffect(()=>{
+  //   async function validate() {
+  //       const response = await fetch('/api/terms/validate')
+  //       const data = await response.json();
+  //       for(const tuple of data) {
+  //         if(tuple.level_term === term.name && tuple.load_status !== "OK") {
+  //           setColor("red")
+  //           return;
+  //         }
+  //       }
+  //       setColor("#EDEDED")
+  //   }
+  //   //if(term.courses.length !== prevCoursesLength.current) {
+  //   validate();
+  //     //prevCoursesLength.current = term.courses.length;
+  //   //}
+  // },[term])
+
 
   return <Group x={term.x} y={term.y}>
     <Rect 
-      stroke="#EDEDED" 
+      stroke={term.color}
       strokeWidth={term.borderWidth}  
 
       fill="white" 
@@ -73,6 +93,7 @@ function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight, on
         newCourse.width = textRef.current ? textRef.current.getTextWidth()+course.padding*2 : newCourse.width;
       }
       return newCourse;
+      
     }))
     
   },[])
@@ -87,6 +108,36 @@ function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight, on
   function getDistance(x1 : number, y1 : number, x2 : number, y2: number) {
     return Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2))
   }
+  async function removeCourseFromDB(term_name : string) {
+    await fetch(`/api/terms/${term_name}/delete`, {
+      method: 'delete',
+      body: JSON.stringify({
+        course: course.name.replace(" ", "-")
+      })
+    })
+
+    // Won't work on reload
+    const response = await fetch('/api/terms/validate')
+    const data = await response.json();
+
+    const invalidTerms : Array<string> = [];
+    for(const tuple of data) {
+      if(tuple.load_status !== "OK") {
+        invalidTerms.push(tuple.level_term)
+      }
+    }
+
+    setTerms(prev => prev.map(
+          term => {
+            const newTerm = term.clone();
+            newTerm.color = '#EDEDED';
+            if(invalidTerms.includes(term.name)) {
+              newTerm.color = 'red';
+            }
+            return newTerm;
+          }
+        ))
+  }
 
   function onDragStart() {
     // Remove from term
@@ -97,12 +148,7 @@ function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight, on
         if(newTerm.courses.includes(course.name)) {
           newTerm.courses = newTerm.courses.filter(name => name !== course.name);
           updateCoursesInTerm(newTerm);
-          fetch(`/api/terms/${term.name}/delete`, {
-            method: 'delete',
-            body: JSON.stringify({
-              course: course.name.replace(" ", "-")
-            })
-          })
+          removeCourseFromDB(newTerm.name)
         }
         return newTerm;
       })
@@ -164,6 +210,33 @@ function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight, on
 
   }
 
+  async function addCourseToDB(term_name : string) {
+    await fetch(`/api/terms/${term_name}/add`, {
+      method: 'post',
+      body: JSON.stringify({
+        course: course.name.replace(" ", "-")
+      })
+    });
+
+    // Won't work on reload
+    const response = await fetch('/api/terms/validate')
+    const data = await response.json();
+    for(const tuple of data) {
+      if(tuple.level_term === term_name && tuple.load_status !== "OK") {
+        setTerms(prev => prev.map(
+          term => {
+            if(term.name == term_name) {
+              const newTerm = term.clone();
+              newTerm.color = 'red';
+              return newTerm;
+            }
+            return term;
+          }
+        ))
+      }
+    }
+  }
+
   function onDragEnd() {
     const position = getPosition();
 
@@ -185,12 +258,7 @@ function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight, on
           newTerm.courses.splice(idealIndex, 0, course.name); 
           updateCoursesInTerm(newTerm);
 
-          fetch(`/api/terms/${term.name}/add`, {
-            method: 'post',
-            body: JSON.stringify({
-              course: course.name.replace(" ", "-")
-            })
-          });
+          addCourseToDB(newTerm.name);
         }
         return newTerm;
       })
