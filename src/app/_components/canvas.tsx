@@ -240,11 +240,11 @@ export default function Canvas({width, height} : {width : number, height : numbe
       </Layer>
       <Layer>
         {
-          courses?.map(course=>course.prereqs.map(prereq => {
-            const otherIndex = courses.findIndex(c => c.name == prereq);
-            const otherCourse = courses[otherIndex];
-            return <Line opacity={0.5} key={`${prereq}->${course.name}`} stroke="black" strokeWidth={2} points={[course.x+course.width/2, course.y+course.getFullHeight()/2, otherCourse ? otherCourse.x+otherCourse.width/2 : course.x, otherCourse ? otherCourse.y+otherCourse.getFullHeight()/2 : course.y]}/>
-          })).flat()
+          // courses?.map(course=>course.prereqs.map(prereq => {
+          //   const otherIndex = courses.findIndex(c => c.name == prereq);
+          //   const otherCourse = courses[otherIndex];
+          //   return <Line opacity={0.5} key={`${prereq}->${course.name}`} stroke="black" strokeWidth={2} points={[course.x+course.width/2, course.y+course.getFullHeight()/2, otherCourse ? otherCourse.x+otherCourse.width/2 : course.x, otherCourse ? otherCourse.y+otherCourse.getFullHeight()/2 : course.y]}/>
+          // })).flat()
         }
       </Layer>
       <Layer>

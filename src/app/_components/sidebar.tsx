@@ -1,7 +1,7 @@
 'use client'
 import { Search, Sliders } from '@geist-ui/icons'
 import { useEffect, useState, useContext } from 'react';
-import { CourseContext, CourseModel } from './ui';
+import { CourseContext, CourseModel, PrereqTreeNode } from './ui';
 import { ColorRing } from 'react-loader-spinner'
 import FilterButton from './filterButton';
 
@@ -81,6 +81,13 @@ const defaultStyles: ButtonStyles = {
     inactive: 'border-gray-400 hover:bg-gray-50 text-gray-600'
 };
 
+type Node = {
+    department: string,
+    course_number: string,
+    id: number,
+    parent_id: number,
+    relation_type: "OR" | "AND" | null
+}
 export default function SideBar() {
     const [search, setSearch] = useState<string>('');
     const [isOpen, setIsOpen] = useState(false);
@@ -109,6 +116,47 @@ export default function SideBar() {
     const [recommendedCourses, setRecommendedCourses] = useState<string[]>([]);
     const setPlannerCourses = useContext(CourseContext)?.setCourses;
     const plannerTerms = useContext(CourseContext)?.terms;
+
+    async function addCourse(courseCode : string) {
+        // const response = await fetch(`/api/courses/prerequisites/${courseCode.replace(" ", "-")}`);
+        // const data = await response.json();
+        
+        // const node_map : Record<number, PrereqTreeNode>= {};
+        // const nodes : Array<Node> = data.nodes;
+        // var root : PrereqTreeNode | null = null;
+
+        // for(const node of nodes) {
+        //     var name = "";
+        //     if(node.department && node.course_number) {
+        //         name = `${node.department} ${node.course_number}`;
+        //     }
+        //     node_map[node.id] = new PrereqTreeNode(name, node.relation_type ?? "LEAF");
+
+        //     if(node.id === data.root_id[0]?.root_node_id) {
+        //         root = node_map[node.id] ?? null;
+        //     }
+        // }
+
+        // for(const node of nodes) {
+        //     node_map[node.parent_id]?.children.push(node_map[node.id]);
+        // }
+        // console.log(root)
+
+        // setPlannerCourses(prev => {
+        //         const courses = prev.map((course) => course.name)
+
+        //         return prev.map((course) => {
+        //         const newCourse = course.clone();
+        //         newCourse.color = newCourse.prereqs == null || newCourse.prereqs.satisfied(courses) ? "black" : "red";
+        //         return newCourse;
+        //         })
+        //     })
+        if(setPlannerCourses) {
+            setPlannerCourses(prev => [...prev, new CourseModel(courseCode, 0, 312)])
+
+            
+        }
+    }
 
     useEffect(()=>{
         async function getRecommendations() {
@@ -386,9 +434,9 @@ export default function SideBar() {
                     
                 }
             </div>
-            <div className="flex-1 px-[24px] overflow-y-auto">
+            <div className="flex-1 px-[24px] py-[24px] overflow-y-hidden">
                 {   activeOption && !filtersOpen &&
-                    <div className="py-4">
+                    <div className="">
                         {(() => {
                             const course = courses[activeOption];
                             if (course) {
@@ -398,7 +446,7 @@ export default function SideBar() {
                                             <span className="text-xl font-medium text-gray-500">{course.code}</span>
                                             <button 
                                                 className="px-3 py-1.5 text-sm font-medium text-white bg-black hover:bg-gray-800 rounded-lg transition-colors hover:cursor-pointer"
-                                                onClick={() => {setPlannerCourses && setPlannerCourses(prev => [...prev, new CourseModel(course.code, 0, 312)])}}
+                                                onClick={()=>{addCourse(course.code)}}
                                             >
                                                 Add Course
                                             </button>
@@ -449,8 +497,8 @@ export default function SideBar() {
                 }
                 {
                     !activeOption &&
-                    <>
-                    <div className='flex text-gray-500 py-[12px]'>
+                    <div className='h-full overflow-y-auto'>
+                    <div className='flex text-gray-500 pb-[12px]'>
                             <div className='w-36'>Department</div>
                             <div>Courses</div>
                     </div>
@@ -461,7 +509,7 @@ export default function SideBar() {
                         </div>)
                         
                     }
-                    </>
+                    </div>
                 }
             </div>
         </div>
