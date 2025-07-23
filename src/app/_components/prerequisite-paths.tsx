@@ -16,7 +16,7 @@ interface PrerequisitePath {
   relationContext?: string;
 }
 
-export default function   PrerequisitePathsDemo() {
+export default function PrerequisitePathsDemo() {
   const [department, setDepartment] = useState("CS");
   const [courseNumber, setCourseNumber] = useState("4820");
   const [maxDepth, setMaxDepth] = useState(10);
@@ -47,17 +47,18 @@ export default function   PrerequisitePathsDemo() {
       <h1 className="text-3xl font-bold mb-6 text-gray-800">
         Course Prerequisite Path Analyzer
       </h1>
-      
+
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">Search for Prerequisite Paths</h2>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
                 Department
               </label>
               <input
+                id="department"
                 type="text"
                 value={department}
                 onChange={(e) => setDepartment(e.target.value.toUpperCase())}
@@ -66,12 +67,13 @@ export default function   PrerequisitePathsDemo() {
                 required
               />
             </div>
-            
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="courseNumber" className="block text-sm font-medium text-gray-700 mb-1">
                 Course Number
               </label>
               <input
+                id="courseNumber"
                 type="text"
                 value={courseNumber}
                 onChange={(e) => setCourseNumber(e.target.value)}
@@ -80,8 +82,8 @@ export default function   PrerequisitePathsDemo() {
                 required
               />
             </div>
-            
-            <div>
+
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Max Depth
               </label>
@@ -93,9 +95,9 @@ export default function   PrerequisitePathsDemo() {
                 max="20"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
+            </div> */}
           </div>
-          
+
           <button
             type="submit"
             disabled={isLoading}
@@ -138,7 +140,7 @@ export default function   PrerequisitePathsDemo() {
 
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-xl font-semibold mb-4">Prerequisite Paths</h3>
-            
+
             {data.paths.length === 0 ? (
               <p className="text-gray-600 italic">
                 No prerequisites found for this course.
@@ -149,6 +151,7 @@ export default function   PrerequisitePathsDemo() {
                   .sort((a, b) => a.depth - b.depth || a.department.localeCompare(b.department))
                   .map((path, index) => (
                     <div
+                      // biome-ignore lint/suspicious/noArrayIndexKey: It's fine.
                       key={index}
                       className="border border-gray-200 rounded-md p-4 hover:bg-gray-50"
                     >
@@ -167,11 +170,11 @@ export default function   PrerequisitePathsDemo() {
                           Depth: {path.depth}
                         </span>
                       </div>
-                      
+
                       {path.title && (
                         <p className="text-gray-600 text-sm mb-2">{path.title}</p>
                       )}
-                      
+
                       {path.path.length > 0 && (
                         <div className="text-sm text-gray-700">
                           <span className="font-medium">Prerequisite Chain:</span>{" "}
