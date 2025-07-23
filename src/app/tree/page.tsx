@@ -8,7 +8,7 @@ import CourseTreeVisualization from "~/app/_components/course-tree-visualization
 export default function CourseTreePage() {
     const [department, setDepartment] = useState("");
     const [courseNumber, setCourseNumber] = useState("");
-    const [maxDepth, setMaxDepth] = useState(5);
+    const [maxDepth, setMaxDepth] = useState(1000);
 
     const {
         data: treeData,
