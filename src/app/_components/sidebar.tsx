@@ -257,7 +257,7 @@ export default function SideBar() {
         .filter(option => 
             option.toLowerCase().includes(search.toLowerCase())
         )
-        .slice(0, 5)
+        //.slice(0, 5)
         )
     },[search, filtersOpen])
 
@@ -331,7 +331,7 @@ export default function SideBar() {
                         (search !== "") ? 
                         (
                             selectedOptions.length > 0 ? 
-                            <div className="mt-[12px] flex flex-wrap gap-2">
+                            <div className="mt-[12px] flex flex-wrap gap-2 max-h-[130px] overflow-y-auto">
                                 {selectedOptions.map((option) => {
                                     const styles = getButtonStyles(option);
                                     return (
@@ -361,7 +361,7 @@ export default function SideBar() {
                                 <div className="mt-[12px] text-gray-500">
                                     Recommmended Courses:
                                 </div>
-                                <div className="mt-[12px] flex flex-wrap gap-2">
+                                <div className="mt-[12px] flex flex-wrap gap-2 max-h-[130px] overflow-y-auto">
                                     {recommendedCourses.map((option) => {
                                         const styles = getButtonStyles(option);
                                         return (
@@ -386,7 +386,7 @@ export default function SideBar() {
                     
                 }
             </div>
-            <div className="flex-1 px-8 overflow-y-auto">
+            <div className="flex-1 px-[24px] overflow-y-auto">
                 {   activeOption && !filtersOpen &&
                     <div className="py-4">
                         {(() => {
@@ -446,6 +446,22 @@ export default function SideBar() {
                             return <p className="text-gray-600">No course information available</p>;
                         })()}
                     </div>
+                }
+                {
+                    !activeOption &&
+                    <>
+                    <div className='flex text-gray-500 py-[12px]'>
+                            <div className='w-36'>Department</div>
+                            <div>Courses</div>
+                    </div>
+                    {
+                        departments.map(item => <div key={item.department} className='flex text-gray-500'>
+                            <div className='w-36'>{item.department}</div>
+                            <div>{item.count}</div>
+                        </div>)
+                        
+                    }
+                    </>
                 }
             </div>
         </div>
