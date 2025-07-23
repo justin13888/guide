@@ -1,6 +1,15 @@
 'use client';
 import { useState } from "react";
 import { api } from "~/trpc/react";
+import {
+    useReactTable,
+    getCoreRowModel,
+    flexRender,
+    type ColumnDef,
+    type CellContext,
+    type Row,
+    type HeaderGroup,
+} from "@tanstack/react-table";
 
 type PrereqRow = {
     department: string;
@@ -17,6 +26,45 @@ export default function PrereqsPage() {
     const query = api.prereqsWithOfferings.getCoursePrereqs.useQuery({
         department,
         courseNumber,
+    });
+
+    const columns: ColumnDef<PrereqRow>[] = [
+        {
+            accessorKey: "department",
+            header: "Department",
+            cell: (info: CellContext<PrereqRow, unknown>) => String(info.getValue()),
+        },
+        {
+            accessorKey: "courseNumber",
+            header: "Course Number",
+            cell: (info: CellContext<PrereqRow, unknown>) => String(info.getValue()),
+        },
+        {
+            accessorKey: "minGrade",
+            header: "Min Grade",
+            cell: (info: CellContext<PrereqRow, unknown>) => info.getValue() ?? "-",
+        },
+        {
+            accessorKey: "fall",
+            header: "Fall",
+            cell: (info: CellContext<PrereqRow, unknown>) => (info.row.original.fall ? "✔️" : ""),
+        },
+        {
+            accessorKey: "winter",
+            header: "Winter",
+            cell: (info: CellContext<PrereqRow, unknown>) => (info.row.original.winter ? "✔️" : ""),
+        },
+        {
+            accessorKey: "spring",
+            header: "Spring",
+            cell: (info: CellContext<PrereqRow, unknown>) => (info.row.original.spring ? "✔️" : ""),
+        },
+    ];
+
+    const table = useReactTable<PrereqRow>({
+        data: query.data ?? [],
+        columns,
+        getCoreRowModel: getCoreRowModel(),
     });
 
     return (
@@ -43,27 +91,27 @@ export default function PrereqsPage() {
             </form>
             {query.isLoading && <div>Loading...</div>}
             {query.error && <div className="text-red-600">{query.error.message || "Failed to fetch prerequisites."}</div>}
-            {query.data && query.data.length > 0 && (
-                <table className="w-full border">
-                    <thead>
-                        <tr>
-                            <th>Department</th>
-                            <th>Course Number</th>
-                            <th>Min Grade</th>
-                            <th>Fall</th>
-                            <th>Winter</th>
-                            <th>Spring</th>
-                        </tr>
+            {table.getRowModel().rows.length > 0 && (
+                <table className="w-full border border-gray-300 rounded-lg overflow-hidden shadow">
+                    <thead className="bg-gray-100">
+                        {table.getHeaderGroups().map((headerGroup: HeaderGroup<PrereqRow>) => (
+                            <tr key={headerGroup.id}>
+                                {headerGroup.headers.map(header => (
+                                    <th key={header.id} className="px-4 py-2 text-left font-semibold border-b">
+                                        {flexRender(header.column.columnDef.header, header.getContext())}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
                     </thead>
                     <tbody>
-                        {(query.data as PrereqRow[]).map(row => (
-                            <tr key={`${row.department}-${row.courseNumber}`}>
-                                <td>{row.department}</td>
-                                <td>{row.courseNumber}</td>
-                                <td>{row.minGrade ?? '-'}</td>
-                                <td>{row.fall ? '✔️' : ''}</td>
-                                <td>{row.winter ? '✔️' : ''}</td>
-                                <td>{row.spring ? '✔️' : ''}</td>
+                        {table.getRowModel().rows.map((row: Row<PrereqRow>) => (
+                            <tr key={row.id} className="hover:bg-blue-50">
+                                {row.getVisibleCells().map(cell => (
+                                    <td key={cell.id} className="px-4 py-2 border-b">
+                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                    </td>
+                                ))}
                             </tr>
                         ))}
                     </tbody>
