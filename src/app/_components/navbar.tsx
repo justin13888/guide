@@ -20,9 +20,9 @@ export default async function NavBar() {
                     </Link>
                 </div>
             </div>
-            <div className="border border-gray-300 rounded-full p-2">
+            {/* <div className="border border-gray-300 rounded-full p-2">
                 <User size={12} fill="#E5E7EB" stroke="#E5E7EB" />
-            </div>
+            </div> */}
             {/* <div className="flex flex-col items-center justify-center gap-4">
             <p className="text-center text-2xl text-white">
                 {session && <span>Logged in as {session.user?.name}</span>}

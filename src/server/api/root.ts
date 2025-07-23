@@ -2,6 +2,7 @@ import { postRouter } from "~/server/api/routers/post";
 import { seedRouter } from "~/server/api/routers/seed";
 import { plannerRouter } from "~/server/api/routers/planner";
 import { requirementsRouter } from "~/server/api/routers/requirements";
+import { prereqsWithOfferingsRouter } from "~/server/api/routers/prereqsterms";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   seed: seedRouter,
   planner: plannerRouter,
   requirements: requirementsRouter,
+  prereqsWithOfferings: prereqsWithOfferingsRouter,
 });
 
 // export type definition of API

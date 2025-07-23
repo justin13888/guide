@@ -359,7 +359,6 @@ function parseSimpleRequirements(
     `parseSimpleRequirements called with content: "${content}", isAntireq: ${isAntireq}, isCoreq: ${isCoreq}`,
   );
   const courses = parseCourseList(content);
-  console.log(`parseCourseList returned:`, courses);
   return {
     outerRelationType: "AND", // Simple requirements are always AND
     requirements: courses.map((course) => ({

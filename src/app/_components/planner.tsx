@@ -25,8 +25,8 @@ export default function Planner() {
   },[]);
 
   return <div className="h-full bg-[#EDEDED] flex justify-end items-end" ref={containerRef} >
-      <div className='absolute'>
-        <Canvas width={dimensions.width} height={dimensions.height}></Canvas>
+      <div className='absolute'>  
+        <Canvas width={dimensions.width} height={dimensions.height}/>
       </div>
       <div className='flex flex-col gap-2 m-4 z-10'>
         {/* <Home className='hover:cursor-pointer'></Home> */}

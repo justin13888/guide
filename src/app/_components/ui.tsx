@@ -5,12 +5,50 @@ import SideBar from "~/app/_components/sidebar";
 import Planner from "~/app/_components/planner";
 
 type CourseContextType = {
-    courses: CourseModel[],
-    terms: TermModel[], 
-    setTerms : React.Dispatch<React.SetStateAction<TermModel[]>>, 
-    setCourses : React.Dispatch<React.SetStateAction<CourseModel[]>>
+  courses: CourseModel[],
+  terms: TermModel[], 
+  setTerms : React.Dispatch<React.SetStateAction<TermModel[]>>, 
+  setCourses : React.Dispatch<React.SetStateAction<CourseModel[]>>
 }
 export const CourseContext = createContext<CourseContextType | undefined>(undefined);
+
+export type RelationType = "AND" | "OR" | "LEAF";
+
+export class PrereqTreeNode {
+  name: string;
+  relationType: RelationType;
+  children: Array<PrereqTreeNode>;
+
+  constructor(name: string, relationType : RelationType) {
+    this.name = name;
+    this.relationType = relationType;
+    this.children = [];
+  }
+
+  satisfied(course_codes : Array<string>) {
+    if(this.relationType === "LEAF") {
+      return course_codes.includes(this.name)
+    }else if(this.relationType === "AND") {
+      for(const child of this.children) {
+        if(!child.satisfied(course_codes)) {
+          return false; 
+        }
+      }
+      return true; 
+    }else if(this.relationType === "OR") {
+      for(const child of this.children) {
+        if(child.satisfied(course_codes)) {
+          return true; 
+        }
+      }
+      return false;
+    }
+
+
+    return false;
+  }
+
+}
 
 export class CourseModel {
   name: string;
@@ -20,10 +58,10 @@ export class CourseModel {
   fontSize: number;
   padding: number;
   borderWidth: number; 
-  prereqs: Array<string>;
+  prereqs: PrereqTreeNode | null;
   width: number; 
 
-  constructor(name: string, x: number, y: number, prereqs: Array<string> = [], color: string = 'black', fontSize: number = 12, padding: number = 10, borderWidth: number = 1.5,  width: number = 100) {
+  constructor(name: string, x: number, y: number, prereqs: PrereqTreeNode | null = null, color: string = 'black', fontSize: number = 12, padding: number = 10, borderWidth: number = 1.5,  width: number = 100) {
     this.name = name;
     this.x = x;
     this.y = y;
@@ -40,7 +78,7 @@ export class CourseModel {
   }
 
   clone() {
-    return new CourseModel(this.name, this.x, this.y, [...this.prereqs], this.color, this.fontSize, this.padding, this.borderWidth, this.width);
+    return new CourseModel(this.name, this.x, this.y, this.prereqs, this.color, this.fontSize, this.padding, this.borderWidth, this.width);
   }
 }
 // Stores state of each Term 
@@ -115,9 +153,7 @@ export class TermModel {
 };
 
 export default function UI() {
-    const TERM_NAMES = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
-    
-    
+    const TERM_NAMES = ["1A", "1B", "W1", "2A", "W2", "2B", "W3", "3A", "W4", "3B", "4A", "W5", "W6", "4B"];
     
     function getInitialTerms() {
         let currentX = 0;

@@ -46,8 +46,21 @@ export async function GET(
       )
       SELECT department, course_number FROM root_nodes JOIN course_prerequisites ON root_node_id = id
     `)
-
     
+    // For full correctness, query to get the base case of the prereq tree
+
+    // WITH courses_taken(department, course_number) as 
+    // (SELECT department, course_number FROM user_courses WHERE user_id = 'master'),
+    // SELECT p.id, p.parent_id, p.relation_type 
+    // FROM prerequisite_nodes p JOIN courses_taken ct ON p.department = ct.department AND p.course_number = ct.course_number
+
+    // Then, with these nodes, repeatedly build the prereq tree
+
+    // SELECT p.id, p.parent_id, p.relation_type  
+    // FROM prerequisite_nodes 
+    // WHERE p.relation_type = 'OR' AND 
+    // OR 
+
 
     // SELECT c.department, c.course_number 
     //   FROM courses c

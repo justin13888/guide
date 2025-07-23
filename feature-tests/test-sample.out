@@ -60,3 +60,12 @@ department                  course_number           title
 ------------------------------------------------------------------
 STAT			            221			          	Applied Statistics
 STAT			            241			        	Applied Statistics II
+
+
+--> Fancy Feature 5 Output
+
+department     course_number       min_grade       fall     winter    spring 
+----------------------------------------------------------------------------------
+MATH               118                                t        t         t
+STAT               220                70              t        t         f
+STAT               231                                t        t         t
