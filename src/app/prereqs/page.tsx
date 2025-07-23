@@ -1,6 +1,15 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { api } from "~/trpc/react";
+
+type PrereqRow = {
+    department: string;
+    courseNumber: string;
+    minGrade: number | null;
+    fall: boolean;
+    winter: boolean;
+    spring: boolean;
+};
 
 export default function PrereqsPage() {
     const [department, setDepartment] = useState("");
@@ -10,32 +19,10 @@ export default function PrereqsPage() {
         courseNumber,
     });
 
-    const [results, setResults] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchPrereqs = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await query.refetch();
-            setResults(data.data ?? []);
-        } catch (err: any) {
-            setError(err.message || "Failed to fetch prerequisites.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        console.log("Query data:", query.data);
-    }, [query.data]);
-
     return (
         <div className="max-w-2xl mx-auto p-8">
             <h1 className="text-2xl font-bold mb-4">Test Prerequisite Query</h1>
-            <form onSubmit={fetchPrereqs} className="mb-6 flex gap-2">
+            <form onSubmit={e => { e.preventDefault(); }} className="mb-6 flex gap-2">
                 <input
                     type="text"
                     placeholder="Department (e.g. MATH)"
@@ -54,9 +41,9 @@ export default function PrereqsPage() {
                 />
                 <button type="submit" className="bg-blue-600 text-white px-4 py-1 rounded">Fetch</button>
             </form>
-            {loading && <div>Loading...</div>}
-            {error && <div className="text-red-600">{error}</div>}
-            {results.length > 0 && (
+            {query.isLoading && <div>Loading...</div>}
+            {query.error && <div className="text-red-600">{query.error.message || "Failed to fetch prerequisites."}</div>}
+            {query.data && query.data.length > 0 && (
                 <table className="w-full border">
                     <thead>
                         <tr>
@@ -69,8 +56,8 @@ export default function PrereqsPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {results.map((row, idx) => (
-                            <tr key={idx}>
+                        {(query.data as PrereqRow[]).map(row => (
+                            <tr key={`${row.department}-${row.courseNumber}`}>
                                 <td>{row.department}</td>
                                 <td>{row.courseNumber}</td>
                                 <td>{row.minGrade ?? '-'}</td>
