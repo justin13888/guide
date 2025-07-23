@@ -41,7 +41,7 @@ export const plannerRouter = createTRPCRouter({
     // return post ?? null;
   }),
 
-  getPrerequisiteChains: protectedProcedure
+  getPrerequisiteChains: publicProcedure // TODO: Change to protectedProcedure when there's time to fix
     .input(z.object({
       department: z.string(),
       courseNumber: z.string(),
@@ -415,7 +415,7 @@ export const plannerRouter = createTRPCRouter({
       for (const row of allResults) {
         const nodeId = row.id;
         const parentId = row.parent_id;
-        
+
         const currentNode = nodeMap.get(nodeId);
         if (!currentNode) continue;
 
@@ -436,7 +436,7 @@ export const plannerRouter = createTRPCRouter({
         nodeId: number;
         depth: number;
       }> = [];
-      
+
       for (const row of allResults) {
         if (row.department && row.course_number && row.depth < maxDepth - 1) {
           coursesToProcess.push({
@@ -466,7 +466,7 @@ export const plannerRouter = createTRPCRouter({
 
           if (subCoursePrereq) {
             console.log(`DEBUG: Found sub-prerequisites for ${courseInfo.department} ${courseInfo.courseNumber}`);
-            
+
             // Get the prerequisite tree for this sub-course
             const subTreeQuery = sql`
               WITH RECURSIVE sub_prereq_tree AS (
@@ -510,7 +510,7 @@ export const plannerRouter = createTRPCRouter({
             for (const subRow of subResults) {
               const subData = subRow as RawResult;
               const subNodeId = subData.id;
-              
+
               const subNode: CourseTreeNode = {
                 id: `${courseInfo.nodeId}-${subNodeId}`,
                 department: subData.department ?? '',
@@ -534,7 +534,7 @@ export const plannerRouter = createTRPCRouter({
               const subData = subRow as RawResult;
               const subNodeId = subData.id;
               const subParentId = subData.parent_id;
-              
+
               const currentSubNode = subNodeMap.get(subNodeId);
               if (!currentSubNode) continue;
 

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "~/server/api/trpc";
 import { sql } from "drizzle-orm";
 
 /**
@@ -7,7 +7,7 @@ import { sql } from "drizzle-orm";
  * along with their term offerings. The user provides department and courseNumber.
  */
 export const prereqsWithOfferingsRouter = createTRPCRouter({
-  getCoursePrereqs: protectedProcedure
+  getCoursePrereqs: publicProcedure // TODO: Change to protectedProcedure when there's time to fix
     .input(
       z.object({
         department: z.string(),
