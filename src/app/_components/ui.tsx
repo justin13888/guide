@@ -115,9 +115,7 @@ export class TermModel {
 };
 
 export default function UI() {
-    const TERM_NAMES = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
-    
-    
+    const TERM_NAMES = ["1A", "1B", "W1", "2A", "W2", "2B", "W3", "3A", "W4", "3B", "4A", "W5", "W6", "4B"];
     
     function getInitialTerms() {
         let currentX = 0;

@@ -255,7 +255,7 @@ export default function SideBar() {
         setActiveOption('')
         setSelectedOptions(search === "" ? [] : options
         .filter(option => 
-            option.toLowerCase().includes(search.toLowerCase())
+            option.toLowerCase().replaceAll(" ", "").includes(search.toLowerCase().replaceAll(" ", ""))
         )
         //.slice(0, 5)
         )
