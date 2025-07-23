@@ -67,6 +67,12 @@ export default function PrereqsPage() {
         getCoreRowModel: getCoreRowModel(),
     });
 
+    const showNoResults =
+        department && courseNumber &&
+        !query.isLoading &&
+        !query.error &&
+        (table.getRowModel().rows.length === 0);
+
     return (
         <div className="max-w-2xl mx-auto p-8">
             <h1 className="text-2xl font-bold mb-4">Test Prerequisite Query</h1>
@@ -91,6 +97,11 @@ export default function PrereqsPage() {
             </form>
             {query.isLoading && <div>Loading...</div>}
             {query.error && <div className="text-red-600">{query.error.message || "Failed to fetch prerequisites."}</div>}
+            {showNoResults && (
+                <div className="text-center text-gray-500 mt-4">
+                    No course found for <span className="font-semibold">{department} {courseNumber}</span>. Please check the department and course number, or try a different course.
+                </div>
+            )}
             {table.getRowModel().rows.length > 0 && (
                 <table className="w-full border border-gray-300 rounded-lg overflow-hidden shadow">
                     <thead className="bg-gray-100">
