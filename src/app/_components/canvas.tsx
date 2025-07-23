@@ -60,7 +60,7 @@ function TermView({term}: {term: TermModel}) {
   </Group>
 }
 
-function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight} : {course: CourseModel, setTerms : React.Dispatch<React.SetStateAction<TermModel[]>>, setCourses : React.Dispatch<React.SetStateAction<CourseModel[]>>, canvasWidth : number, canvasHeight : number}){
+function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight, onClick} : {course: CourseModel, setTerms : React.Dispatch<React.SetStateAction<TermModel[]>>, setCourses : React.Dispatch<React.SetStateAction<CourseModel[]>>, canvasWidth : number, canvasHeight : number, onClick : ()=>void}){
 
   const textRef = useRef<Konva.Text>(null);
   const blockRef = useRef<Konva.Group>(null);
@@ -198,7 +198,7 @@ function CourseView({course, setTerms, setCourses, canvasWidth, canvasHeight} : 
     
   }
 
-  return <Group ref={blockRef} draggable={true} onMouseDown={()=>{blockRef.current?.moveToTop()}} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd} x={course.x} y={course.y}>
+  return <Group onClick={onClick} ref={blockRef} draggable={true} onMouseDown={()=>{blockRef.current?.moveToTop()}} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd} x={course.x} y={course.y}>
     <Rect 
       stroke={course.color} 
       strokeWidth={course.borderWidth}
@@ -229,13 +229,14 @@ export default function Canvas({width, height} : {width : number, height : numbe
   const setTerms = useContext(CourseContext)?.setTerms;
   const courses = useContext(CourseContext)?.courses;
   const setCourses = useContext(CourseContext)?.setCourses;
-  
+  const setActiveOption = useContext(CourseContext)?.setActiveOption;
+
 
   return (
     <Stage width={width} height={height} draggable={true} x={width/8} y={height/4}>
       <Layer>
         {
-          terms?.map((term) => <TermView key={term.name} term={term}></TermView>)
+          terms?.map((term) => <TermView  key={term.name} term={term}></TermView>)
         }
       </Layer>
       <Layer>
@@ -249,7 +250,7 @@ export default function Canvas({width, height} : {width : number, height : numbe
       </Layer>
       <Layer>
         {
-          setTerms && setCourses && courses?.map(course=><CourseView course={course} key={course.name} canvasWidth={width} canvasHeight={height} setTerms={setTerms} setCourses={setCourses} ></CourseView>)
+          setTerms && setCourses && courses?.map(course=><CourseView onClick={()=>{setActiveOption && setActiveOption(course.name)}} course={course} key={course.name} canvasWidth={width} canvasHeight={height} setTerms={setTerms} setCourses={setCourses} ></CourseView>)
         }
         {/* <CourseBlock x={0} y={0} name='CS 240' color={"#45DEC4"}/>
         <CourseBlock x={0} y={0} name='MATH 239' color={"#E93D82"}/>
