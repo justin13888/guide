@@ -156,7 +156,10 @@ export default function SideBar() {
         //         })
         //     })
         if(setPlannerCourses) {
-            setPlannerCourses(prev => [...prev, new CourseModel(courseCode, 0, 312)])
+            setPlannerCourses(prev => {
+                if(prev.map(course => course.name).includes(courseCode)) return prev;
+                return [...prev, new CourseModel(courseCode, 0, 312)];
+            })
 
             
         }
