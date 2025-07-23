@@ -6,9 +6,11 @@ import Planner from "~/app/_components/planner";
 
 type CourseContextType = {
   courses: CourseModel[],
-  terms: TermModel[], 
-  setTerms : React.Dispatch<React.SetStateAction<TermModel[]>>, 
-  setCourses : React.Dispatch<React.SetStateAction<CourseModel[]>>
+  terms: TermModel[],
+  activeOption: string,
+  setTerms: React.Dispatch<React.SetStateAction<TermModel[]>>,
+  setCourses: React.Dispatch<React.SetStateAction<CourseModel[]>>,
+  setActiveOption: React.Dispatch<React.SetStateAction<string>>
 }
 export const CourseContext = createContext<CourseContextType | undefined>(undefined);
 
@@ -19,26 +21,26 @@ export class PrereqTreeNode {
   relationType: RelationType;
   children: Array<PrereqTreeNode>;
 
-  constructor(name: string, relationType : RelationType) {
+  constructor(name: string, relationType: RelationType) {
     this.name = name;
     this.relationType = relationType;
     this.children = [];
   }
 
-  satisfied(course_codes : Array<string>) {
-    if(this.relationType === "LEAF") {
+  satisfied(course_codes: Array<string>) {
+    if (this.relationType === "LEAF") {
       return course_codes.includes(this.name)
-    }else if(this.relationType === "AND") {
-      for(const child of this.children) {
-        if(!child.satisfied(course_codes)) {
-          return false; 
+    } else if (this.relationType === "AND") {
+      for (const child of this.children) {
+        if (!child.satisfied(course_codes)) {
+          return false;
         }
       }
-      return true; 
-    }else if(this.relationType === "OR") {
-      for(const child of this.children) {
-        if(child.satisfied(course_codes)) {
-          return true; 
+      return true;
+    } else if (this.relationType === "OR") {
+      for (const child of this.children) {
+        if (child.satisfied(course_codes)) {
+          return true;
         }
       }
       return false;
@@ -57,11 +59,11 @@ export class CourseModel {
   color: string;
   fontSize: number;
   padding: number;
-  borderWidth: number; 
+  borderWidth: number;
   prereqs: PrereqTreeNode | null;
-  width: number; 
+  width: number;
 
-  constructor(name: string, x: number, y: number, prereqs: PrereqTreeNode | null = null, color: string = 'black', fontSize: number = 12, padding: number = 10, borderWidth: number = 1.5,  width: number = 100) {
+  constructor(name: string, x: number, y: number, prereqs: PrereqTreeNode | null = null, color: string = 'black', fontSize: number = 12, padding: number = 10, borderWidth: number = 1.5, width: number = 100) {
     this.name = name;
     this.x = x;
     this.y = y;
@@ -74,7 +76,7 @@ export class CourseModel {
   }
 
   getFullHeight() {
-    return this.fontSize + this.padding*2;
+    return this.fontSize + this.padding * 2;
   }
 
   clone() {
@@ -84,47 +86,47 @@ export class CourseModel {
 // Stores state of each Term 
 export class TermModel {
   name: string;
-  x: number; 
-  y: number; 
+  x: number;
+  y: number;
   containerHeight: number;
-  width: number; 
-  height: number; 
+  width: number;
+  height: number;
   fontSize: number;
   padding: number;
   borderWidth: number;
-  innerPadding: number; 
-  marginRight : number;
+  innerPadding: number;
+  marginRight: number;
   hovered: boolean;
   insertIndex: number;
-  courses: Array<string>; 
+  courses: Array<string>;
 
-  constructor(name: string, x : number, y : number, containerHeight: number = 0, hovered : boolean = false, width: number = 120, height: number = 300, fontSize: number = 12, padding: number = 12, borderWidth: number = 1, innerPadding: number = 6, marginRight : number = 12, insertIndex : number = 0) {
+  constructor(name: string, x: number, y: number, containerHeight: number = 0, hovered: boolean = false, width: number = 120, height: number = 300, fontSize: number = 12, padding: number = 12, borderWidth: number = 1, innerPadding: number = 6, marginRight: number = 12, insertIndex: number = 0) {
     this.name = name;
-    this.x = x; 
+    this.x = x;
     this.y = y;
-    this.width = width; 
+    this.width = width;
     this.height = height;
     this.containerHeight = containerHeight;
     this.fontSize = fontSize;
     this.padding = padding;
     this.borderWidth = borderWidth;
-    this.innerPadding = innerPadding; 
+    this.innerPadding = innerPadding;
     this.marginRight = marginRight;
     this.hovered = hovered;
     this.insertIndex = insertIndex;
     this.courses = [];
   }
 
-  getFullWidth(){
-    return this.width + this.marginRight; 
+  getFullWidth() {
+    return this.width + this.marginRight;
   }
 
-  getRenderedHeight(){
-    this.containerHeight = (32 + this.innerPadding)*this.courses.length; // Temporary work-around, value should not be hard-coded
-    return Math.max(this.height, this.getContainerStartY()+this.containerHeight+this.padding)
+  getRenderedHeight() {
+    this.containerHeight = (32 + this.innerPadding) * this.courses.length; // Temporary work-around, value should not be hard-coded
+    return Math.max(this.height, this.getContainerStartY() + this.containerHeight + this.padding)
   }
 
-  getContainerStartY(){
+  getContainerStartY() {
     return this.padding + this.fontSize + this.innerPadding;
   }
 
@@ -134,77 +136,79 @@ export class TermModel {
     return clone;
   }
 
-  getIdealInsertIndex(y : number) {
+  getIdealInsertIndex(y: number) {
     let idealIndex = 0;
     let currentY = this.getContainerStartY();
-    let minimum =  Math.abs(y - currentY);
+    let minimum = Math.abs(y - currentY);
 
-    for(let i = 0; i < this.courses.length; i++) {
+    for (let i = 0; i < this.courses.length; i++) {
       currentY += this.innerPadding + 32; // Hard-coded, not ideal
       const difference = Math.abs(y - currentY);
-      if(difference < minimum) {
+      if (difference < minimum) {
         minimum = difference;
-        idealIndex = i+1;
+        idealIndex = i + 1;
       }
     }
 
-    return idealIndex; 
+    return idealIndex;
   }
 };
 
 export default function UI() {
-    const TERM_NAMES = ["1A", "1B", "W1", "2A", "W2", "2B", "W3", "3A", "W4", "3B", "4A", "W5", "W6", "4B"];
-    
-    function getInitialTerms() {
-        let currentX = 0;
-        return TERM_NAMES.map((name)=>{
-            const termModel = new TermModel(name, currentX, 0);
-            currentX += termModel.getFullWidth();
-            return termModel;
-        });
-    }
-    //const SAMPLE_COURSES = ['CS 240', 'MATH 239', 'PSYCH 207', 'CO 250', 'ENGL 192', 'ECE 105', 'SE 212', 'STAT 206'];
-    //SAMPLE_COURSES.map((name)=>{return new CourseModel(name, 0, 312, ['CS 240']);})
-    const [terms, setTerms] = useState<TermModel[]>(getInitialTerms());
-    const [courses, setCourses] = useState<CourseModel[]>([]);
-    
-    useEffect(()=>{
-        TERM_NAMES.forEach(async (name : string)=> {
-            const response = await fetch(`/api/terms/${name}`);
-            const data = await response.json(); 
-            if(data["error"]) return;
-            
-            const newCourses = data.map((item : {department : string, course_number : string}) => `${item.department} ${item.course_number}`);
-            
-            terms.forEach((term)=>{
-                if(term.name !== name) return;
-                setCourses(prev => [...prev, ...newCourses.map((name : string, i : number) => {
-                    const newCourse = new CourseModel(name, term.x + term.padding, 0)
-                    newCourse.y = term.getContainerStartY()+i*(newCourse.getFullHeight() + term.innerPadding);
-                    return newCourse
-                })])
-            })
-            
 
-            setTerms(
-                prevTerms => 
-                prevTerms.map(term => {
-                    const newTerm = term.clone();
-                    // Add courses
-                    if(newTerm.name === name){
-                        newTerm.courses.push(...newCourses);
-                    }
-                    return newTerm;
-                })
-            ); 
-        })
-    }, []);
+  const TERM_NAMES = ["1A", "1B", "W1", "2A", "W2", "2B", "W3", "3A", "W4", "3B", "4A", "W5", "W6", "4B"];
+
+  function getInitialTerms() {
+    let currentX = 0;
+    return TERM_NAMES.map((name) => {
+      const termModel = new TermModel(name, currentX, 0);
+      currentX += termModel.getFullWidth();
+      return termModel;
+    });
+  }
+  //const SAMPLE_COURSES = ['CS 240', 'MATH 239', 'PSYCH 207', 'CO 250', 'ENGL 192', 'ECE 105', 'SE 212', 'STAT 206'];
+  //SAMPLE_COURSES.map((name)=>{return new CourseModel(name, 0, 312, ['CS 240']);})
+  const [terms, setTerms] = useState<TermModel[]>(getInitialTerms());
+  const [courses, setCourses] = useState<CourseModel[]>([]);
+  const [activeOption, setActiveOption] = useState<string>('');
+
+  useEffect(() => {
+    TERM_NAMES.forEach(async (name: string) => {
+      const response = await fetch(`/api/terms/${name}`);
+      const data = await response.json();
+      if (data["error"]) return;
+
+      const newCourses = data.map((item: { department: string, course_number: string }) => `${item.department} ${item.course_number}`);
+
+      terms.forEach((term) => {
+        if (term.name !== name) return;
+        setCourses(prev => [...prev, ...newCourses.map((name: string, i: number) => {
+          const newCourse = new CourseModel(name, term.x + term.padding, 0)
+          newCourse.y = term.getContainerStartY() + i * (newCourse.getFullHeight() + term.innerPadding);
+          return newCourse
+        })])
+      })
 
 
-    return <CourseContext.Provider value={{courses : courses, terms: terms, setCourses : setCourses, setTerms : setTerms}}>
-        <div className="flex-1">
-            <Planner/>
-        </div>
-        <SideBar />
-    </ CourseContext.Provider>
+      setTerms(
+        prevTerms =>
+          prevTerms.map(term => {
+            const newTerm = term.clone();
+            // Add courses
+            if (newTerm.name === name) {
+              newTerm.courses.push(...newCourses);
+            }
+            return newTerm;
+          })
+      );
+    })
+  }, []);
+
+
+  return <CourseContext.Provider value={{ courses: courses, terms: terms, activeOption: activeOption, setCourses: setCourses, setTerms: setTerms, setActiveOption: setActiveOption }}>
+    <div className="flex-1">
+      <Planner />
+    </div>
+    <SideBar />
+  </ CourseContext.Provider>
 }

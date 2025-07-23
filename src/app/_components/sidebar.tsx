@@ -93,7 +93,8 @@ export default function SideBar() {
     const [isOpen, setIsOpen] = useState(false);
     const [options, setOptions] = useState<string[]>([]);
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-    const [activeOption, setActiveOption] = useState<string>('');
+
+
     const [courses, setCourses] = useState<CoursesState>({});
     const [departments, setDepartments] = useState<Array<Department>>([]);
     const [filtersOpen, setFiltersOpen] = useState(false);
@@ -116,6 +117,9 @@ export default function SideBar() {
     const [recommendedCourses, setRecommendedCourses] = useState<string[]>([]);
     const setPlannerCourses = useContext(CourseContext)?.setCourses;
     const plannerTerms = useContext(CourseContext)?.terms;
+    const activeOption = useContext(CourseContext)?.activeOption;
+    const setActiveOption = useContext(CourseContext)?.setActiveOption;
+
 
     async function addCourse(courseCode : string) {
         // const response = await fetch(`/api/courses/prerequisites/${courseCode.replace(" ", "-")}`);
@@ -205,6 +209,10 @@ export default function SideBar() {
         return buttonStyles[prefix as keyof typeof buttonStyles] || defaultStyles;
     };
     
+    useEffect(()=>{
+        if(activeOption) fetchCourseDetails(activeOption);
+    },[activeOption])
+
     const fetchCourseDetails = async (option: string) => {
         if (courses[option]?.description) {
             return;
@@ -300,7 +308,7 @@ export default function SideBar() {
     }
 
     useEffect(()=> {
-        setActiveOption('')
+        if(setActiveOption) setActiveOption('')
         setSelectedOptions(search === "" ? [] : options
         .filter(option => 
             option.toLowerCase().replaceAll(" ", "").includes(search.toLowerCase().replaceAll(" ", ""))
@@ -389,8 +397,7 @@ export default function SideBar() {
                                                 activeOption === option ? styles.active : styles.inactive
                                             }`}
                                             onClick={() => {
-                                                fetchCourseDetails(option);
-                                                setActiveOption(option);
+                                                if(setActiveOption)setActiveOption(option);
                                             }}
                                         >
                                             {option}
@@ -419,8 +426,7 @@ export default function SideBar() {
                                                     activeOption === option ? styles.active : styles.inactive
                                                 }`}
                                                 onClick={() => {
-                                                    fetchCourseDetails(option);
-                                                    setActiveOption(option);
+                                                    if(setActiveOption)setActiveOption(option);
                                                 }}
                                             >
                                                 {option}
@@ -436,7 +442,7 @@ export default function SideBar() {
             </div>
             <div className="flex-1 px-[24px] py-[24px] overflow-y-hidden">
                 {   activeOption && !filtersOpen &&
-                    <div className="">
+                    <div className="h-full overflow-y-auto">
                         {(() => {
                             const course = courses[activeOption];
                             if (course) {
@@ -503,11 +509,15 @@ export default function SideBar() {
                             <div>Courses</div>
                     </div>
                     {
+                        departments.length > 0 ? 
                         departments.map(item => <div key={item.department} className='flex text-gray-500'>
                             <div className='w-36'>{item.department}</div>
                             <div>{item.count}</div>
                         </div>)
-                        
+                        :
+                        <div className='flex justify-center'>
+                            <ColorRing  visible={true} height="50" width="50"  colors={['black', 'black', 'black', 'black', 'black']}></ColorRing>
+                        </div>
                     }
                     </div>
                 }
