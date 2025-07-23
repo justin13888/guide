@@ -230,6 +230,15 @@ STAT			            241			        	Statistics (Advanced Level)
 
 --> Basic Feature 5 Output
 
+user_id      level_term      num_courses     total_units_excl_pd       load_status    
+--------------------------------------------------------------------------------------
+master          1A                 4                    2               OK
+master          1B                 1                  0.5               OK
+master          2A                 8                    4               TOO MANY COURSES
+master          W3                 2                    1               TOO MANY UNITS
+
+--> Fancy Feature 1 Output
+
 department  course_number  title                              depth  path_string  path_array         parent_relation
 --------------------------------------------------------------------------------------------------------------------
 MATH        118            Calculus 2 for Engineering         2      MATH 118     ["MATH 118"]       OR

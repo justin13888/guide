@@ -60,7 +60,7 @@ JOIN courses c
 GROUP BY uc.user_id, uc.level_term
 ORDER BY uc.user_id, uc.level_term;
 
---> Basic Feature 5
+--> Fancy Feature 1
 WITH RECURSIVE prereq_paths AS (
     -- Base case: Start from the root prerequisite node for the target course
     SELECT 
