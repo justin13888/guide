@@ -1,6 +1,7 @@
 'use client';
 import { useState } from "react";
 import { api } from "~/trpc/react";
+import { MessageSquareOff } from "lucide-react";
 import {
     useReactTable,
     getCoreRowModel,
@@ -166,9 +167,7 @@ export default function PrereqsPage() {
             {/* No Results State */}
             {showNoResults && (
                 <div className="text-center py-12">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0121 12c0-4.411-3.589-8-8-8s-8 3.589-8 8c0 2.152.851 4.103 2.233 5.708L3 22l5.708-4.767z" />
-                    </svg>
+                    <MessageSquareOff className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">No prerequisites found</h3>
                     <p className="mt-1 text-sm text-gray-500">
                         No course found for <span className="font-semibold">{submittedDepartment} {submittedCourseNumber}</span>.
