@@ -15,9 +15,12 @@ export default async function NavBar() {
                     <Link href="/tree" className="text-gray-600 hover:text-blue-600 transition-colors">
                         Course Tree
                     </Link>
-                    <Link href="/prerequisite-paths" className="text-gray-600 hover:text-blue-600 transition-colors">
+                    <Link href="/prereqs" className="text-gray-600 hover:text-blue-600 transition-colors">
                         Prerequisites
                     </Link>
+                    {/* <Link href="/prerequisite-paths" className="text-gray-600 hover:text-blue-600 transition-colors">
+                        Prerequisites
+                    </Link> */}
                 </div>
             </div>
             {/* <div className="border border-gray-300 rounded-full p-2">
