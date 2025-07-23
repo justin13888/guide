@@ -565,7 +565,7 @@ export const plannerRouter = createTRPCRouter({
         childrenCount: rootNode.children?.length ?? 0
       } : 'NO ROOT');
 
-      return {
+      const res = {
         targetCourse: {
           department: targetCourse.department,
           courseNumber: targetCourse.courseNumber,
@@ -575,6 +575,10 @@ export const plannerRouter = createTRPCRouter({
         maxDepth: maxDepthFound,
         totalNodes,
         hasPrerequisites: true,
-      };
-    }), // TODO: Finalize this ^^
+      }; // TODO: Finalize this ^^
+
+      console.log("DEBUG: response:", JSON.stringify(res, null, 2))
+
+      return res;
+    }),
 });
