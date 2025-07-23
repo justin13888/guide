@@ -240,3 +240,13 @@ MATH        148            Calculus 2 (Advanced Level)        2      MATH 148   
 STAT        220            Probability (Non-Specialist Level) 2      STAT 220     ["STAT 220"]       OR
 STAT        230            Probability                        2      STAT 230     ["STAT 230"]       OR
 STAT        240            Probability (Advanced Level)       2      STAT 240     ["STAT 240"]       OR
+
+
+--> Fancy Feature 5 Output
+
+department     course_number       min_grade       fall     winter    spring 
+----------------------------------------------------------------------------------
+MATH           116                                   t        f         f
+MATH           118                                   t        t         t
+STAT           220                   70              t        t         f
+STAT           231                                   t        t         t
