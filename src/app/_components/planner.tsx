@@ -26,7 +26,6 @@ export default function Planner() {
     return ()=>{window.removeEventListener('resize', onResize)}
   },[]);
 
-  // Handler for CheckSquare click
   function handleValidate() {
     fetch('/api/validate', {
       method: 'POST',
@@ -35,17 +34,17 @@ export default function Planner() {
         user_id: 'master'
       })
     })
-      .then(res => res.json())
-      .then(data => {
-        setAlert({ open: true, courses: data.unsatisfied || [] });
-        if (alertTimeout.current) clearTimeout(alertTimeout.current);
-        alertTimeout.current = setTimeout(() => {
-          setAlert({ open: false, courses: [] });
-        }, 3000);
-      })
-      .catch(err => {
+    .then(res => res.json())
+    .then(data => {
+      setAlert({ open: true, courses: data.unsatisfied || [] });
+      if (alertTimeout.current) clearTimeout(alertTimeout.current);
+      alertTimeout.current = setTimeout(() => {
         setAlert({ open: false, courses: [] });
-      });
+      }, 3000);
+    })
+    .catch(err => {
+      setAlert({ open: false, courses: [] });
+    });
   }
 
   useEffect(() => {

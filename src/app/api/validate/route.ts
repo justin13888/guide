@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '~/server/db';
 
-// POST: { user_id: string }
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -10,8 +9,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
     }
 
-    // Get all courses for the user
-    // Then check prerequisites for each
     const sql = `
       WITH input_courses AS (
         SELECT department, course_number FROM user_courses WHERE user_id = '${user_id}'
@@ -23,7 +20,6 @@ export async function POST(request: Request) {
         LEFT JOIN prerequisite_nodes pn ON cp.root_node_id = pn.id
       ),
       unsatisfied AS (
-        -- Case 0: Root is a prerequisite course (leaf node)
         SELECT rn.department, rn.course_number
         FROM root_nodes rn
         WHERE rn.root_department IS NOT NULL AND rn.root_course_number IS NOT NULL
@@ -33,10 +29,7 @@ export async function POST(request: Request) {
               AND uc.department = rn.root_department
               AND uc.course_number = rn.root_course_number
           )
-        
         UNION
-        
-        -- Case 1: Root is AND (all children must be satisfied)
         SELECT rn.department, rn.course_number
         FROM root_nodes rn
         WHERE rn.relation_type = 'AND' AND (
@@ -69,10 +62,7 @@ export async function POST(request: Request) {
               )
           )
         )
-        
         UNION
-        
-        -- Case 2: Root is OR (at least one child must be satisfied)
         SELECT rn.department, rn.course_number
         FROM root_nodes rn
         WHERE rn.relation_type = 'OR' AND NOT (

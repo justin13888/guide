@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '~/server/db';
 
 export async function GET(request: NextRequest) {
-  
-
   try {
     const { searchParams } = new URL(request.url);
     const fall = searchParams.get('fall');
@@ -15,10 +13,11 @@ export async function GET(request: NextRequest) {
         levels = ['%', '%', '%', '%', '%', '%', '%', '%', '%'];
     }
 
+    // fall, winter, and spring are optional parameters
     const courses = await db.execute(`SELECT department, course_number, title FROM courses
-                                        WHERE (fall = true OR fall = ${fall})
-                                            AND (winter = true OR winter = ${winter})
-                                            AND (spring = true OR spring= ${spring})
+                                        WHERE (NOT ${fall} OR fall = ${fall})
+                                            AND (NOT ${winter} OR winter = ${winter})
+                                            AND (NOT ${spring} OR spring = ${spring})
                                             AND (course_number LIKE '${levels[0]}'
                                                     OR course_number LIKE '${levels[1]}'
                                                     OR course_number LIKE '${levels[2]}'
