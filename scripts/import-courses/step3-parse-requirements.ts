@@ -195,140 +195,110 @@ function parseProgramRestrictions(content: string): Array<{
     "",
   );
 
-  // Split by semicolons and find the last section that contains "students"
+  // Handle "Open only to students in" format
+  const openToMatch = contentWithoutLevel.match(
+    /Open only to students in (.+?)(?=\.|$)/i,
+  );
+  if (openToMatch) {
+    const programText = openToMatch[1]!.trim();
+    const programs = programText.split(/\s+or\s+/).map((p) => p.trim());
+    for (let i = 0; i < programs.length; i++) {
+      if (programs[i]) {
+        programRestrictions.push({
+          program: programs[i]!,
+          level: i === 0 ? level : null,
+          restrictionType: "INCLUDE",
+        });
+      }
+    }
+    return programRestrictions;
+  }
+
+  // Split by semicolons and find sections that contain "students"
   const sections = contentWithoutLevel.split(";").map((s) => s.trim());
 
-  for (let i = sections.length - 1; i >= 0; i--) {
-    const section = sections[i];
+  for (const section of sections) {
     if (section && section.toLowerCase().includes("students")) {
       // Extract the part before "students"
       const studentsMatch = section.match(/(.*?)\s+students(?:\s+only)?[.]?/i);
       if (studentsMatch && studentsMatch[1]) {
-        const programText = studentsMatch[1].trim();
+        let programText = studentsMatch[1].trim();
 
-        // Skip if this looks like course requirements (contains course patterns)
+        // Skip if this looks like course requirements
         if (programText.match(/[A-Z]{2,4}\s+\d{3}[A-Z]?/)) {
           continue;
         }
 
-        let programs: string[] = [];
+        // First, handle explicit "and" separated programs
+        if (programText.includes(" and ")) {
+          const andParts = programText.split(/\s+and\s+/).map((p) => p.trim());
+          // Check if these are separate programs or part of a single program name
+          const isSeparatePrograms = andParts.some((part) =>
+            part.match(/^(Honours|Major|Minor|Option|Diploma|BSE|BCFM)/),
+          );
+
+          if (isSeparatePrograms) {
+            for (let i = 0; i < andParts.length; i++) {
+              if (andParts[i]) {
+                programRestrictions.push({
+                  program: andParts[i]!,
+                  level: i === 0 ? level : null,
+                  restrictionType: "INCLUDE",
+                });
+              }
+            }
+            continue;
+          }
+        }
+
+        // Handle comma-separated programs
         if (programText.includes(",")) {
-          // Comma-separated format
-          const commaParts = [];
-          let part = "";
-          let depth = 0;
-          for (let char of programText) {
-            if (char === "(") depth++;
-            if (char === ")") depth--;
-            if (char === "," && depth === 0) {
-              commaParts.push(part.trim());
-              part = "";
+          const parts = [];
+          let currentPart = "";
+          let parenDepth = 0;
+
+          // Parse carefully to handle parentheses
+          for (let i = 0; i < programText.length; i++) {
+            const char = programText[i]!;
+            if (char === "(") parenDepth++;
+            if (char === ")") parenDepth--;
+
+            if (char === "," && parenDepth === 0) {
+              parts.push(currentPart.trim());
+              currentPart = "";
             } else {
-              part += char;
+              currentPart += char;
             }
           }
-          if (part.trim()) commaParts.push(part.trim());
-          // Remove 'or ' prefix from the last part if present
-          if (commaParts.length > 1) {
-            const lastPart = commaParts[commaParts.length - 1];
-            if (lastPart && lastPart.toLowerCase().startsWith("or ")) {
-              commaParts[commaParts.length - 1] = lastPart.slice(3).trim();
+          if (currentPart.trim()) parts.push(currentPart.trim());
+
+          // Process each part
+          for (let i = 0; i < parts.length; i++) {
+            let part = parts[i]!.trim();
+            // Remove 'or ' prefix if present
+            if (part.toLowerCase().startsWith("or ")) {
+              part = part.slice(3).trim();
+            }
+            if (part) {
+              programRestrictions.push({
+                program: part,
+                level: i === 0 ? level : null,
+                restrictionType: "INCLUDE",
+              });
             }
           }
-          programs = commaParts;
         } else {
-          // No commas: need to handle "and" vs "or" splitting
-          // First, try to split by " or " to handle cases like "A or B"
-          const orParts = programText.split(/\s+or\s+/i).map((p) => p.trim());
-
-          if (orParts.length > 1) {
-            // We have "or" splits, use them
-            programs = orParts;
-          } else {
-            // No "or" found, check for "and" splits
-            // But be careful - some program names contain "and" (like "Geography and Aviation")
-            // We'll split by " and " but only if it looks like separate programs
-            const andParts = programText
-              .split(/\s+and\s+/i)
-              .map((p) => p.trim());
-
-            // If we have multiple "and" parts and they look like separate programs
-            // (i.e., they don't contain common program name patterns)
-            if (andParts.length > 1) {
-              // Check if any part contains typical program indicators
-              const hasProgramIndicators = andParts.some(
-                (part) =>
-                  part.toLowerCase().includes("honours") ||
-                  part.toLowerCase().includes("minor") ||
-                  part.toLowerCase().includes("major") ||
-                  part.toLowerCase().includes("option") ||
-                  part.toLowerCase().includes("diploma"),
-              );
-
-              if (hasProgramIndicators) {
-                // These look like separate programs, split them
-                programs = andParts;
-              } else {
-                // This might be a single program name with "and", keep it whole
-                programs = [programText];
-              }
-            } else {
-              // Single program
-              programs = [programText];
+          // Single program or "or" separated
+          const orParts = programText.split(/\s+or\s+/).map((p) => p.trim());
+          for (let i = 0; i < orParts.length; i++) {
+            if (orParts[i]) {
+              programRestrictions.push({
+                program: orParts[i]!,
+                level: i === 0 ? level : null,
+                restrictionType: "INCLUDE",
+              });
             }
           }
-        }
-
-        // Further split any remaining parts that contain "or" (for cases like "A or B" within comma-separated lists)
-        const finalPrograms: string[] = [];
-        for (const program of programs) {
-          if (program.toLowerCase().includes(" or ")) {
-            // Split by "or" but be careful with parentheses
-            const orParts = [];
-            let part = "";
-            let depth = 0;
-            for (let char of program) {
-              if (char === "(") depth++;
-              if (char === ")") depth--;
-              if (
-                char === " " &&
-                depth === 0 &&
-                part.toLowerCase().endsWith(" or")
-              ) {
-                orParts.push(part.slice(0, -3).trim());
-                part = "";
-              } else {
-                part += char;
-              }
-            }
-            if (part.trim()) orParts.push(part.trim());
-
-            // If we found "or" splits, use them; otherwise keep the original
-            if (orParts.length > 1) {
-              finalPrograms.push(...orParts);
-            } else {
-              finalPrograms.push(program);
-            }
-          } else {
-            finalPrograms.push(program);
-          }
-        }
-
-        for (let i = 0; i < finalPrograms.length; i++) {
-          const program = finalPrograms[i];
-          if (program) {
-            programRestrictions.push({
-              program: program,
-              // Apply level only to the first program
-              level: i === 0 && programRestrictions.length === 0 ? level : null,
-              restrictionType: "INCLUDE",
-            });
-          }
-        }
-
-        // If we found program restrictions, break out of the loop
-        if (programRestrictions.length > 0) {
-          break;
         }
       }
     }
@@ -355,9 +325,6 @@ function parseSimpleRequirements(
     isCoreq: boolean;
   }>;
 } {
-  console.log(
-    `parseSimpleRequirements called with content: "${content}", isAntireq: ${isAntireq}, isCoreq: ${isCoreq}`,
-  );
   const courses = parseCourseList(content);
   return {
     outerRelationType: "AND", // Simple requirements are always AND
@@ -458,7 +425,7 @@ function parsePrerequisiteGroup(content: string): Array<{
     }
   } else {
     // Handle "One of" expressions
-    if (content.includes("One of")) {
+    if (content.toLowerCase().includes("one of")) {
       const oneOfMatch = content.match(/One of\s+(.+)/i);
       if (oneOfMatch) {
         const courses = parseCourseList(oneOfMatch[1]!);
@@ -476,9 +443,9 @@ function parsePrerequisiteGroup(content: string): Array<{
     } else {
       // Handle simple course lists
       const courses = parseCourseList(content);
-      const hasCommas = content.includes(",");
-      const hasOr = content.includes(" or ");
-      const relationType: "AND" | "OR" = hasCommas || hasOr ? "OR" : "AND";
+      // Only use OR if explicitly joined by "or", otherwise use AND
+      const hasOr = content.toLowerCase().includes(" or ");
+      const relationType: "AND" | "OR" = hasOr ? "OR" : "AND";
 
       requirements.push(
         ...courses.map((course) => ({

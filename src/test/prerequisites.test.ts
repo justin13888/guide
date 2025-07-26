@@ -324,4 +324,73 @@ describe("Prerequisite Parsing", () => {
     expect(result.programRestrictions).toEqual(expectedPrograms);
   });
 
+  it("should parse MATH 117 requirements correctly", () => {
+    const testString =
+      "Prereq: 4U Calculus and Vectors; Open only to students in Electrical and Computer Engineering or Software Engineering or Nanotechnology Engineering. Antireq: MATH 116, 124, 127, 137, 147";
+
+    const result = parseRequirementsDescription(testString);
+
+    expect(result).toBeDefined();
+
+    // Check program restrictions
+    expect(result.programRestrictions).toBeDefined();
+    expect(result.programRestrictions.length).toBe(3);
+
+    const expectedPrograms = [
+      {
+        program: "Electrical and Computer Engineering",
+        level: null,
+        restrictionType: "INCLUDE" as const,
+      },
+      {
+        program: "Software Engineering",
+        level: null,
+        restrictionType: "INCLUDE" as const,
+      },
+      {
+        program: "Nanotechnology Engineering",
+        level: null,
+        restrictionType: "INCLUDE" as const,
+      },
+    ];
+
+    expect(result.programRestrictions).toEqual(expectedPrograms);
+
+    // Check antirequisites
+    const antireqGroup = result.groups.find((group) =>
+      group.requirements.some((req) => req.isAntireq),
+    );
+    expect(antireqGroup).toBeDefined();
+    if (antireqGroup) {
+      expect(antireqGroup.requirements.length).toBe(5);
+
+      const expectedAntireqs = [
+        { department: "MATH", courseNumber: "116" },
+        { department: "MATH", courseNumber: "124" },
+        { department: "MATH", courseNumber: "127" },
+        { department: "MATH", courseNumber: "137" },
+        { department: "MATH", courseNumber: "147" },
+      ];
+
+      const actualAntireqs = antireqGroup.requirements.map((req) => ({
+        department: req.relatedDepartment,
+        courseNumber: req.relatedCourseNumber,
+      }));
+
+      expect(actualAntireqs).toEqual(expectedAntireqs);
+
+      // Verify all are marked as antireqs
+      expect(antireqGroup.requirements.every((req) => req.isAntireq)).toBe(
+        true,
+      );
+      // Verify none are marked as coreqs
+      expect(antireqGroup.requirements.every((req) => !req.isCoreq)).toBe(true);
+    }
+
+    // Verify no regular prerequisites are parsed (since "4U Calculus and Vectors" is not a course code)
+    const prereqGroup = result.groups.find((group) =>
+      group.requirements.some((req) => !req.isAntireq && !req.isCoreq),
+    );
+    expect(prereqGroup).toBeUndefined();
+  });
 });
