@@ -4,6 +4,8 @@ import {
   prerequisiteNodes,
   coursePrerequisites,
   courseProgramRestrictions,
+  antirequisites,
+  corequisites,
 } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 import {
@@ -55,6 +57,22 @@ export type TransformedCourse = {
     program: string;
     minLevel: string | null;
     restrictionType: "INCLUDE" | "EXCLUDE";
+  }>;
+
+  // For antirequisites table
+  antirequisites: Array<{
+    department: string;
+    courseNumber: string;
+    antirequisiteDepartment: string;
+    antirequisiteCourseNumber: string;
+  }>;
+
+  // For corequisites table
+  corequisites: Array<{
+    department: string;
+    courseNumber: string;
+    corequisiteDepartment: string;
+    corequisiteCourseNumber: string;
   }>;
 };
 
@@ -119,6 +137,30 @@ export function transformCourseData(
     restrictionType: pr.restrictionType,
   }));
 
+  // Process antirequisites from the groups array
+  const transformedAntirequisites = groups.flatMap((group) =>
+    group.requirements
+      .filter((req) => req.isAntireq)
+      .map((req) => ({
+        department,
+        courseNumber,
+        antirequisiteDepartment: req.relatedDepartment,
+        antirequisiteCourseNumber: req.relatedCourseNumber,
+      })),
+  );
+
+  // Process corequisites from the groups array
+  const transformedCorequisites = groups.flatMap((group) =>
+    group.requirements
+      .filter((req) => req.isCoreq)
+      .map((req) => ({
+        department,
+        courseNumber,
+        corequisiteDepartment: req.relatedDepartment,
+        corequisiteCourseNumber: req.relatedCourseNumber,
+      })),
+  );
+
   return {
     course: {
       department,
@@ -135,6 +177,8 @@ export function transformCourseData(
     prerequisiteNodes,
     coursePrerequisites,
     programRestrictions: transformedProgramRestrictions,
+    antirequisites: transformedAntirequisites,
+    corequisites: transformedCorequisites,
   };
 }
 
@@ -232,6 +276,24 @@ export async function insertCourseData(
           .insert(courseProgramRestrictions)
           .values(transformedCourse.programRestrictions);
         insertedRestrictions += transformedCourse.programRestrictions.length;
+      }
+
+      // 5. Insert antirequisites
+      if (transformedCourse.antirequisites.length > 0) {
+        await tx
+          .insert(antirequisites)
+          .values(transformedCourse.antirequisites)
+          .onConflictDoNothing();
+        insertedRestrictions += transformedCourse.antirequisites.length;
+      }
+
+      // 6. Insert corequisites
+      if (transformedCourse.corequisites.length > 0) {
+        await tx
+          .insert(corequisites)
+          .values(transformedCourse.corequisites)
+          .onConflictDoNothing();
+        insertedRestrictions += transformedCourse.corequisites.length;
       }
 
       return {
@@ -376,6 +438,8 @@ export async function clearExistingCourseData(): Promise<void> {
     await tx.delete(coursePrerequisites);
     await tx.delete(prerequisiteNodes);
     await tx.delete(courseProgramRestrictions);
+    await tx.delete(antirequisites);
+    await tx.delete(corequisites);
     await tx.delete(courses);
   });
 

@@ -4,6 +4,7 @@ import {
   prerequisiteNodes,
   coursePrerequisites,
   courseProgramRestrictions,
+  antirequisites,
 } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 import {
@@ -55,6 +56,14 @@ export type TransformedCourse = {
     program: string;
     minLevel: string | null;
     restrictionType: "INCLUDE" | "EXCLUDE";
+  }>;
+
+  // For antirequisites table (if antirequisites exist)
+  antirequisites: Array<{
+    department: string;
+    courseNumber: string;
+    antirequisiteDepartment: string;
+    antirequisiteCourseNumber: string;
   }>;
 };
 
@@ -135,6 +144,7 @@ export function transformCourseData(
     prerequisiteNodes,
     coursePrerequisites,
     programRestrictions: transformedProgramRestrictions,
+    antirequisites: [], // No antirequisites in this example
   };
 }
 
@@ -185,14 +195,38 @@ export async function insertCourseData(
         winter = EXCLUDED.winter,
         spring = EXCLUDED.spring;
 
+      ${
+        transformedCourse.prerequisiteNodes.length > 0
+          ? `
       INSERT INTO prerequisiteNodes (parentId, relationType, department, courseNumber, minGrade)
       VALUES (${transformedCourse.prerequisiteNodes[0]!.parentId ?? "NULL"}, ${transformedCourse.prerequisiteNodes[0]!.relationType ? `'${transformedCourse.prerequisiteNodes[0]!.relationType}'` : "NULL"}, ${transformedCourse.prerequisiteNodes[0]!.department ? `'${transformedCourse.prerequisiteNodes[0]!.department}'` : "NULL"}, ${transformedCourse.prerequisiteNodes[0]!.courseNumber ? `'${transformedCourse.prerequisiteNodes[0]!.courseNumber}'` : "NULL"}, ${transformedCourse.prerequisiteNodes[0]!.minGrade ?? "NULL"})
       RETURNING id;
       INSERT INTO coursePrerequisites (department, courseNumber, rootNodeId)
       VALUES ('${transformedCourse.coursePrerequisites!.department}', '${transformedCourse.coursePrerequisites!.courseNumber}', ${rootNodeId})
-      ON CONFLICT (department, courseNumber) DO UPDATE SET rootNodeId = EXCLUDED.rootNodeId;
+      ON CONFLICT (department, courseNumber) DO UPDATE SET rootNodeId = EXCLUDED.rootNodeId;`
+          : ""
+      }
+
+      ${
+        transformedCourse.programRestrictions.length > 0
+          ? `
       INSERT INTO courseProgramRestrictions (department, courseNumber, program, minLevel, restrictionType)
-      VALUES ('${transformedCourse.programRestrictions[0]!.department}', '${transformedCourse.programRestrictions[0]!.courseNumber}', '${transformedCourse.programRestrictions[0]!.program}', ${transformedCourse.programRestrictions[0]!.minLevel ? `'${transformedCourse.programRestrictions[0]!.minLevel}'` : "NULL"}, '${transformedCourse.programRestrictions[0]!.restrictionType}');
+      VALUES ('${transformedCourse.programRestrictions[0]!.department}', '${transformedCourse.programRestrictions[0]!.courseNumber}', '${transformedCourse.programRestrictions[0]!.program}', ${transformedCourse.programRestrictions[0]!.minLevel ? `'${transformedCourse.programRestrictions[0]!.minLevel}'` : "NULL"}, '${transformedCourse.programRestrictions[0]!.restrictionType}');`
+          : ""
+      }
+
+      ${
+        transformedCourse.antirequisites.length > 0
+          ? transformedCourse.antirequisites
+              .map(
+                (antireq) => `
+      INSERT INTO antirequisites (department, courseNumber, antirequisite_department, antirequisite_course_number)
+      VALUES ('${antireq.department}', '${antireq.courseNumber}', '${antireq.antirequisiteDepartment}', '${antireq.antirequisiteCourseNumber}')
+      ON CONFLICT (department, courseNumber, antirequisite_department, antirequisite_course_number) DO NOTHING;`,
+              )
+              .join("\n")
+          : ""
+      }
     COMMIT;
     `);
 
@@ -332,6 +366,7 @@ export async function clearExistingCourseData(): Promise<void> {
     await db.execute("DELETE FROM coursePrerequisites;");
     await db.execute("DELETE FROM prerequisiteNodes;");
     await db.execute("DELETE FROM courseProgramRestrictions;");
+    await db.execute("DELETE FROM antirequisites;");
     await db.execute("DELETE FROM courses;");
     await db.execute("COMMIT;");
   } catch (error) {

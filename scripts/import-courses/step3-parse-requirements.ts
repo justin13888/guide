@@ -649,7 +649,12 @@ export function buildPrerequisiteTree(
     isCoreq: boolean;
   }>,
 ): PrerequisiteTree {
-  if (requirements.length === 0) {
+  // Filter out antireqs and coreqs - only handle prerequisites
+  const prereqRequirements = requirements.filter(
+    (req) => !req.isAntireq && !req.isCoreq,
+  );
+
+  if (prereqRequirements.length === 0) {
     return { nodes: [], rootNodeId: 0 };
   }
 
@@ -657,8 +662,8 @@ export function buildPrerequisiteTree(
   let nextTempId = 1;
 
   // If there's only one requirement, create a simple tree with just the course node
-  if (requirements.length === 1) {
-    const req = requirements[0]!;
+  if (prereqRequirements.length === 1) {
+    const req = prereqRequirements[0]!;
     nodesWithTempIds.push({
       tempId: nextTempId++,
       parentId: null,
@@ -676,9 +681,9 @@ export function buildPrerequisiteTree(
   }
 
   // Group requirements by department to create the hierarchical structure
-  const departmentGroups = new Map<string, typeof requirements>();
+  const departmentGroups = new Map<string, typeof prereqRequirements>();
 
-  for (const req of requirements) {
+  for (const req of prereqRequirements) {
     if (!departmentGroups.has(req.relatedDepartment)) {
       departmentGroups.set(req.relatedDepartment, []);
     }
@@ -731,7 +736,7 @@ export function buildPrerequisiteTree(
     return { nodes, rootNodeId: 1 };
   } else {
     // Single department - create simple structure based on the inner relation type
-    const rootRelationType = requirements.every(
+    const rootRelationType = prereqRequirements.every(
       (r) => r.innerRelationType === "AND",
     )
       ? "AND"
@@ -749,7 +754,7 @@ export function buildPrerequisiteTree(
     });
 
     // Add child nodes for each requirement (these are leaf nodes)
-    requirements.forEach((req, index) => {
+    prereqRequirements.forEach((req) => {
       nodesWithTempIds.push({
         tempId: nextTempId++,
         parentId: rootTempId,
