@@ -194,6 +194,24 @@ SELECT DISTINCT
 FROM leaf_courses
 ORDER BY depth, department, course_number;
 
+--> Fancy Feature 2
+WITH courses_taken(department, course_number) as 
+(SELECT department, course_number FROM user_courses WHERE user_id = 'master'),
+root_nodes AS 
+(
+  WITH RECURSIVE prereq_tree AS (
+    SELECT p.id, p.parent_id, p.relation_type 
+    FROM prerequisite_nodes p JOIN courses_taken ct ON p.department = ct.department AND p.course_number = ct.course_number
+
+    UNION 
+    
+    SELECT p.id, p.parent_id, p.relation_type  
+    FROM prerequisite_nodes p JOIN prereq_tree pt ON pt.parent_id = p.id
+  )
+  SELECT id FROM prereq_tree WHERE parent_id IS NULL
+)
+SELECT department, course_number FROM root_nodes JOIN course_prerequisites ON root_node_id = id
+
 
 --> Indices for Fancy Feature 5
 CREATE INDEX IF NOT EXISTS idx_course_prerequisites_dept_course

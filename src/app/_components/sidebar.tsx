@@ -509,7 +509,7 @@ export default function SideBar() {
                     <div className='h-full overflow-y-auto'>
                     <div className='flex text-gray-500 pb-[12px]'>
                             <div className='w-36'>Department</div>
-                            <div>Courses</div>
+                            <div>Number of Courses</div>
                     </div>
                     {
                         departments.length > 0 ? 

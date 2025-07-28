@@ -162,6 +162,9 @@ FROM leaf_courses
 ORDER BY depth, department, course_number;
 
 
+
+
+
 ---> Fancy Feature 5
 -- This query gets all prerequisites for STAT 231, including any nested ones,
 -- and shows when each course is offered.
