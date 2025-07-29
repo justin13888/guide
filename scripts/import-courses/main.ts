@@ -9,6 +9,7 @@ import {
   getInsertionStats,
   transformCourseDataBatch,
   isDemoRun,
+  ensureMasterUser,
 } from "./step4-prepare-insert";
 import fs from "fs/promises";
 import path from "path";
@@ -44,15 +45,15 @@ export async function importCourses(
   } = options;
 
   console.log("🚀 Starting course import process...");
-  console.log(
-    `Options: clearExisting=${clearExisting}, saveToFile=${saveToFile}, debugOutput=${debugOutput}, batchSize=${batchSize}, maxCourses=${maxCourses || "all"}`,
-  );
 
   try {
     // Step 1: Clear existing data if requested
     if (clearExisting) {
       await clearExistingCourseData();
     }
+
+    // Step 1.5: Ensure master user exists (for foreign key constraints)
+    await ensureMasterUser();
 
     // Step 2: Fetch course data from API (using Fall term as base)
     console.log("📡 Fetching course data from API...");

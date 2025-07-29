@@ -8,6 +8,7 @@ import {
   courseProgramRestrictions,
   antirequisites,
   corequisites,
+  users,
 } from "../../src/server/db/schema";
 
 // Database connection
@@ -29,6 +30,17 @@ async function cleanup() {
   await db.delete(courses);
 
   console.log("✨ Cleanup completed");
+}
+
+async function seedMasterUser() {
+  await db
+    .insert(users)
+    .values({
+      id: "master",
+      name: "Master User",
+      email: "master@example.com",
+    })
+    .onConflictDoNothing();
 }
 
 // STAT 231 Course data and seeding
@@ -1232,6 +1244,9 @@ async function seed() {
 
     // Clean up existing data first
     await cleanup();
+
+    // Seed master user first
+    await seedMasterUser();
 
     // Seed each course separately
     await seedSTAT231();

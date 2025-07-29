@@ -6,6 +6,7 @@ import {
   courseProgramRestrictions,
   antirequisites,
   corequisites,
+  users,
 } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 import {
@@ -444,6 +445,29 @@ export async function clearExistingCourseData(): Promise<void> {
   });
 
   console.log("Existing course data cleared successfully");
+}
+
+/**
+ * Ensure master user exists (for foreign key constraints)
+ */
+export async function ensureMasterUser(): Promise<void> {
+  await db.transaction(async (tx) => {
+    const existingUser = await tx
+      .select()
+      .from(users)
+      .where(eq(users.id, "master"));
+
+    if (existingUser.length === 0) {
+      await tx
+        .insert(users)
+        .values({
+          id: "master",
+          name: "Master User",
+          email: "master@example.com",
+        })
+        .onConflictDoNothing();
+    }
+  });
 }
 
 /**

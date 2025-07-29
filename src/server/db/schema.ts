@@ -348,5 +348,10 @@ export const userCourses = pgTable(
       foreignColumns: [courses.department, courses.courseNumber],
       name: "user_courses_course_fk",
     }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [users.id],
+      name: "user_courses_user_id_fk",
+    }).onDelete("cascade"),
   ],
 );

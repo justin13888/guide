@@ -11,6 +11,7 @@ export const postRelations = relations(post, ({one}) => ({
 export const userRelations = relations(user, ({many}) => ({
 	posts: many(post),
 	sessions: many(session),
+	userCourses: many(userCourses),
 	accounts: many(account),
 }));
 
@@ -44,6 +45,10 @@ export const userCoursesRelations = relations(userCourses, ({one}) => ({
 	course: one(courses, {
 		fields: [userCourses.department],
 		references: [courses.department]
+	}),
+	user: one(user, {
+		fields: [userCourses.userId],
+		references: [user.id]
 	}),
 }));
 
