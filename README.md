@@ -1,6 +1,9 @@
 # UW Guide
 
-Your guide to UW course planning
+Your guide to UW course planning.
+
+We’ve built a course planning tool designed specifically for University of Waterloo students to simplify the complex process of figuring out which courses they can take, when they can take them, and how they fit into their schedules and degrees.
+The app helps users search for courses using advanced filters, explore prereqs, coreqs and antireqs, and get personalized course suggestions based on their academic history. It even supports features like prerequisite path exploration and eligibility checking using SQL triggers — ensuring a student can only add valid course combinations to their plan. To generate the dataset, we scrape data from the undergraduate calendar, and the courses API.
 
 ## Development
 
