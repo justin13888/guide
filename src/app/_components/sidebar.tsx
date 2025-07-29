@@ -237,9 +237,22 @@ export default function SideBar() {
                 code: option,
                 name: data.title || '',
                 description: data.description || '',
-                requirements: data.requirements ? data.requirements.split(';').map((req: string) => req.trim()) : [],
+                requirements: data.requirements ? data.requirements.split(';').map((req: string) => {
+                  const trimmed = req.trim();
+                  const antireqIndex = trimmed.indexOf('Antireq: ');
+                  if (antireqIndex !== -1) {
+                    const beforeAntireq = trimmed.substring(0, antireqIndex).trim();
+                    const afterAntireq = trimmed.substring(antireqIndex + 'Antireq: '.length);
+                    const nextPeriodIndex = afterAntireq.indexOf('.');
+                    const remainingText = nextPeriodIndex !== -1 ? afterAntireq.substring(nextPeriodIndex + 1) : '';
+                    return beforeAntireq + (remainingText ? '. ' + remainingText.trim() : '');
+                  }
+                  return trimmed;
+                }) : [],
                 postrequisites: data2.data.map((course: PostRequisite) => `${course.department} ${course.course_number}`),
-                antirequisites: data3.data.map((course: AntiRequisite) => `${course.department} ${course.course_number} - ${course.title}`)
+                antirequisites: data3.data
+                  .filter((course: AntiRequisite) => course.title && course.title.trim() !== '')
+                  .map((course: AntiRequisite) => `${course.department} ${course.course_number} - ${course.title}`)
             }
         }));
 
@@ -467,7 +480,7 @@ export default function SideBar() {
                                         }
                                         <h3 className="font-medium text-sm text-gray-900 mt-1">{course.name}</h3>
                                         <p className="text-sm text-gray-600 mt-2">{course.description}</p>
-                                        {course.requirements.length > 0 && (
+                                        {course.requirements.length > 0 && course.requirements[0] != "" && (
                                             <div className="mt-3">
                                                 <h4 className="font-medium text-sm text-gray-700">Requirements:</h4>
                                                 <ul className="list-disc list-inside text-sm text-gray-600 mt-1">
