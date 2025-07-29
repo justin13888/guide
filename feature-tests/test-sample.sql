@@ -166,116 +166,168 @@ ORDER BY depth, department, course_number;
 
 
 ---> Fancy Feature 5
--- This query gets all prerequisites for STAT 231, including any nested ones,
--- and shows when each course is offered.
+-- A comprehensive SQL query that validates user course selections by checking 
+-- prerequisite completion (with term order validation) and detecting antirequisite conflicts.
 
-WITH RECURSIVE prereq_base (
-  id, department, course_number, min_grade, path
-) AS (
-  -- Start from STAT 231’s root prerequisite node
-  SELECT
-    pn.id,
-    pn.department,
-    pn.course_number,
-    pn.min_grade,
-    ARRAY[pn.id]
-  FROM course_prerequisites cp
-  JOIN prerequisite_nodes pn ON cp.root_node_id = pn.id
-  WHERE cp.department = 'STAT' AND cp.course_number = '231'
-
-  UNION ALL
-
-  -- Keep going through the prereq tree (handle AND/OR logic)
-  SELECT
-    child.id,
-    child.department,
-    child.course_number,
-    child.min_grade,
-    pb.path || child.id
-  FROM prereq_base pb
-  JOIN (
-    SELECT
-      pn.*,
-      ROW_NUMBER() OVER (PARTITION BY pn.parent_id ORDER BY pn.id) AS rn
-    FROM prerequisite_nodes pn
-  ) child ON child.parent_id = pb.id
-  JOIN prerequisite_nodes parent ON parent.id = pb.id
-  WHERE NOT child.id = ANY(pb.path)
-    AND (
-      parent.relation_type = 'AND' OR
-      (parent.relation_type = 'OR' AND child.rn = 1)
+WITH input_courses AS (
+  SELECT department, course_number, level_term FROM user_courses WHERE user_id = 'master'
+),
+-- Define term order for validation
+term_order AS (
+  SELECT term, position FROM (VALUES
+    ('1A', 1), ('1B', 2), ('W1', 3), ('2A', 4), ('W2', 5), 
+    ('2B', 6), ('W3', 7), ('3A', 8), ('W4', 9), ('3B', 10), 
+    ('4A', 11), ('W5', 12), ('W6', 13), ('4B', 14)
+  ) AS t(term, position)
+),
+root_nodes AS (
+  SELECT 
+    ic.department, 
+    ic.course_number, 
+    ic.level_term,
+    cp.root_node_id, 
+    pn.relation_type, 
+    pn.department AS root_department, 
+    pn.course_number AS root_course_number,
+    pn.min_grade
+  FROM input_courses ic
+  LEFT JOIN course_prerequisites cp ON ic.department = cp.department AND ic.course_number = cp.course_number
+  LEFT JOIN prerequisite_nodes pn ON cp.root_node_id = pn.id
+),
+-- Check unsatisfied prerequisites (including term order)
+unsatisfied_prereqs AS (
+  -- Case 0: Root is a prerequisite course (leaf node)
+  SELECT rn.department, rn.course_number, 'Missing prerequisite' as issue_type
+  FROM root_nodes rn
+  WHERE rn.root_department IS NOT NULL AND rn.root_course_number IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1 FROM user_courses uc
+      JOIN term_order to1 ON uc.level_term = to1.term
+      JOIN term_order to2 ON rn.level_term = to2.term
+      WHERE uc.user_id = 'master'
+        AND uc.department = rn.root_department
+        AND uc.course_number = rn.root_course_number
+        AND to1.position < to2.position 
     )
-),
-
-nested_courses (
-  id, department, course_number, min_grade, path
-) AS (
-  -- If any course from above has its own prereqs, dive into that too
-  SELECT
-    pn2.id,
-    pn2.department,
-    pn2.course_number,
-    pn2.min_grade,
-    pb.path || pn2.id
-  FROM prereq_base pb
-  JOIN course_prerequisites cp2 ON cp2.department = pb.department AND cp2.course_number = pb.course_number
-  JOIN prerequisite_nodes pn2 ON cp2.root_node_id = pn2.id
-  WHERE NOT pn2.id = ANY(pb.path)
-
-  UNION ALL
-
-  -- Keep walking through these nested trees too
-  SELECT
-    child.id,
-    child.department,
-    child.course_number,
-    child.min_grade,
-    nc.path || child.id
-  FROM nested_courses nc
-  JOIN (
-    SELECT
-      pn.*,
-      ROW_NUMBER() OVER (PARTITION BY pn.parent_id ORDER BY pn.id) AS rn
-    FROM prerequisite_nodes pn
-  ) child ON child.parent_id = nc.id
-  JOIN prerequisite_nodes parent ON parent.id = nc.id
-  WHERE NOT child.id = ANY(nc.path)
-    AND (
-      parent.relation_type = 'AND' OR
-      (parent.relation_type = 'OR' AND child.rn = 1)
+  
+  UNION
+  
+  -- Case 1: Root is AND (all children must be satisfied with term order)
+  SELECT rn.department, rn.course_number, 'Missing AND prerequisite' as issue_type
+  FROM root_nodes rn
+  WHERE rn.relation_type = 'AND' AND (
+    EXISTS (
+      SELECT 1 FROM prerequisite_nodes child
+      WHERE child.parent_id = rn.root_node_id
+        AND child.relation_type = 'OR'
+        AND NOT EXISTS (
+          SELECT 1 FROM prerequisite_nodes leaf
+          WHERE leaf.parent_id = child.id
+            AND EXISTS (
+              SELECT 1 FROM user_courses uc
+              JOIN term_order to1 ON uc.level_term = to1.term
+              JOIN term_order to2 ON rn.level_term = to2.term
+              WHERE uc.user_id = 'master'
+                AND uc.department = leaf.department
+                AND uc.course_number = leaf.course_number
+                AND to1.position < to2.position
+            )
+        )
     )
-),
-
--- Combine all found prereq courses
-all_courses AS (
-  SELECT department, course_number, min_grade FROM prereq_base
+    OR
+    EXISTS (
+      SELECT 1 FROM prerequisite_nodes child
+      WHERE child.parent_id = rn.root_node_id
+        AND child.relation_type IS NULL
+        AND (child.department IS NOT NULL AND child.course_number IS NOT NULL)
+        AND NOT EXISTS (
+          SELECT 1 FROM user_courses uc
+          JOIN term_order to1 ON uc.level_term = to1.term
+          JOIN term_order to2 ON rn.level_term = to2.term
+          WHERE uc.user_id = 'master'
+            AND uc.department = child.department
+            AND uc.course_number = child.course_number
+            AND to1.position < to2.position
+        )
+    )
+  )
+  
   UNION
-  SELECT department, course_number, min_grade FROM nested_courses
+  
+  -- Case 2: Root is OR (at least one child must be satisfied with term order)
+  SELECT rn.department, rn.course_number, 'Missing OR prerequisite' as issue_type
+  FROM root_nodes rn
+  WHERE rn.relation_type = 'OR' AND NOT (
+    (
+      EXISTS (
+        SELECT 1 FROM prerequisite_nodes child
+        WHERE child.parent_id = rn.root_node_id
+          AND child.relation_type = 'AND'
+          AND NOT EXISTS (
+            SELECT 1 FROM prerequisite_nodes leaf
+            WHERE leaf.parent_id = child.id
+              AND NOT EXISTS (
+                SELECT 1 FROM user_courses uc
+                JOIN term_order to1 ON uc.level_term = to1.term
+                JOIN term_order to2 ON rn.level_term = to2.term
+                WHERE uc.user_id = 'master'
+                  AND uc.department = leaf.department
+                  AND uc.course_number = leaf.course_number
+                  AND to1.position < to2.position
+              )
+          )
+      )
+    )
+    OR
+    (
+      EXISTS (
+        SELECT 1 FROM prerequisite_nodes child
+        WHERE child.parent_id = rn.root_node_id
+          AND child.relation_type IS NULL
+          AND (child.department IS NOT NULL AND child.course_number IS NOT NULL)
+          AND EXISTS (
+            SELECT 1 FROM user_courses uc
+            JOIN term_order to1 ON uc.level_term = to1.term
+            JOIN term_order to2 ON rn.level_term = to2.term
+            WHERE uc.user_id = 'master'
+              AND uc.department = child.department
+              AND uc.course_number = child.course_number
+              AND to1.position < to2.position
+          )
+      )
+    )
+  )
 ),
-
--- Add STAT 231 itself
-target_course AS (
-  SELECT department, course_number, NULL::integer AS min_grade, fall, winter, spring
-  FROM courses
-  WHERE department = 'STAT' AND course_number = '231'
-),
-
--- Join with course offerings so we know when each course is available
-unique_courses AS (
-  SELECT ac.department, ac.course_number, ac.min_grade, c.fall, c.winter, c.spring
-  FROM all_courses ac
-  JOIN courses c ON c.department = ac.department AND c.course_number = ac.course_number
-  UNION
-  SELECT department, course_number, min_grade, fall, winter, spring FROM target_course
+-- Check antirequisites
+antireq_conflicts AS (
+  SELECT 
+    uc1.department, 
+    uc1.course_number,
+    'Antirequisite conflict' as issue_type,
+    uc2.department as conflict_department,
+    uc2.course_number as conflict_course_number
+  FROM user_courses uc1
+  JOIN antirequisites a ON uc1.department = a.department AND uc1.course_number = a.course_number
+  JOIN user_courses uc2 ON a.antirequisite_department = uc2.department 
+    AND a.antirequisite_course_number = uc2.course_number
+  WHERE uc1.user_id = 'master' AND uc2.user_id = 'master'
 )
+-- Combine both checks
+SELECT 
+  department, 
+  course_number, 
+  issue_type,
+  NULL as conflict_department,
+  NULL as conflict_course_number
+FROM unsatisfied_prereqs
+WHERE department IS NOT NULL AND course_number IS NOT NULL
 
--- Final output: clean list of courses with their offerings
-SELECT DISTINCT ON (department, course_number)
-  department,
-  course_number,
-  min_grade,
-  fall,
-  winter,
-  spring
-FROM unique_courses
-ORDER BY department, course_number;
+UNION ALL
+
+SELECT 
+  department, 
+  course_number, 
+  issue_type,
+  conflict_department,
+  conflict_course_number
+FROM antireq_conflicts; 
