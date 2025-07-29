@@ -213,7 +213,7 @@ unsatisfied_prereqs AS (
   UNION
   
   -- Case 1: Root is AND (all children must be satisfied with term order)
-  SELECT rn.department, rn.course_number, 'Missing AND prerequisite' as issue_type
+  SELECT rn.department, rn.course_number, 'Missing prerequisite' as issue_type
   FROM root_nodes rn
   WHERE rn.relation_type = 'AND' AND (
     EXISTS (
@@ -255,7 +255,7 @@ unsatisfied_prereqs AS (
   UNION
   
   -- Case 2: Root is OR (at least one child must be satisfied with term order)
-  SELECT rn.department, rn.course_number, 'Missing OR prerequisite' as issue_type
+  SELECT rn.department, rn.course_number, 'Missing prerequisite' as issue_type
   FROM root_nodes rn
   WHERE rn.relation_type = 'OR' AND NOT (
     (
@@ -315,7 +315,6 @@ antireq_conflicts AS (
 -- Combine both checks
 SELECT 
   department, 
-  course_number, 
   issue_type,
   NULL as conflict_department,
   NULL as conflict_course_number
