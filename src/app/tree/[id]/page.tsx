@@ -46,7 +46,7 @@ export default function CourseTreeIdPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
-            <div className="mx-auto max-w-7xl">
+            <div className="w-full">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
                         Course Prerequisite Tree

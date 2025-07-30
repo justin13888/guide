@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 interface PrerequisiteNode {
     id: number;
@@ -85,35 +86,45 @@ const PrerequisiteTreeVisualization: React.FC<PrerequisiteTreeVisualizationProps
         const isCourse = node.department && node.courseNumber;
         const isRelation = node.relationType && !isCourse;
 
+        const nodeContent = (
+            <div className={`px-4 py-2 rounded-lg border-2 font-medium text-sm min-w-[200px] text-center ${isRelation
+                ? 'bg-yellow-100 border-yellow-300 text-yellow-800'
+                : isCourse
+                    ? 'bg-purple-100 border-purple-300 text-purple-800 hover:bg-purple-200 hover:border-purple-400 transition-colors cursor-pointer'
+                    : 'bg-gray-100 border-gray-300 text-gray-800'
+                }`}>
+                {isRelation ? (
+                    <div>
+                        <div className="font-bold">{node.relationType}</div>
+                        <div className="text-xs opacity-75">
+                            {node.relationType === 'OR' ? 'Any One' : 'All Required'}
+                        </div>
+                    </div>
+                ) : isCourse ? (
+                    <div>
+                        <div className="font-bold">{node.department} {node.courseNumber}</div>
+                        {node.title && (
+                            <div className="text-xs opacity-75 mt-1 line-clamp-2">
+                                {node.title}
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="text-gray-600">Unknown Node</div>
+                )}
+            </div>
+        );
+
         return (
             <div key={node.id} className="flex flex-col items-center">
                 {/* Node Content */}
-                <div className={`px-4 py-2 rounded-lg border-2 font-medium text-sm min-w-[200px] text-center ${isRelation
-                    ? 'bg-yellow-100 border-yellow-300 text-yellow-800'
-                    : isCourse
-                        ? 'bg-purple-100 border-purple-300 text-purple-800'
-                        : 'bg-gray-100 border-gray-300 text-gray-800'
-                    }`}>
-                    {isRelation ? (
-                        <div>
-                            <div className="font-bold">{node.relationType}</div>
-                            <div className="text-xs opacity-75">
-                                {node.relationType === 'OR' ? 'Any One' : 'All Required'}
-                            </div>
-                        </div>
-                    ) : isCourse ? (
-                        <div>
-                            <div className="font-bold">{node.department} {node.courseNumber}</div>
-                            {node.title && (
-                                <div className="text-xs opacity-75 mt-1 line-clamp-2">
-                                    {node.title}
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="text-gray-600">Unknown Node</div>
-                    )}
-                </div>
+                {isCourse ? (
+                    <Link href={`/tree/${node.department}${node.courseNumber}`}>
+                        {nodeContent}
+                    </Link>
+                ) : (
+                    nodeContent
+                )}
 
                 {/* Children */}
                 {node.children.length > 0 && (
@@ -155,12 +166,14 @@ const PrerequisiteTreeVisualization: React.FC<PrerequisiteTreeVisualizationProps
             <div className="flex flex-col items-center p-6 min-w-max">
                 {/* Target Course */}
                 <div className="mb-8">
-                    <div className="px-6 py-3 bg-blue-100 border-2 border-blue-300 rounded-lg font-bold text-blue-800 text-center">
-                        <div className="text-lg">{data.targetCourse.department} {data.targetCourse.courseNumber}</div>
-                        {data.targetCourse.title && (
-                            <div className="text-sm opacity-75 mt-1">{data.targetCourse.title}</div>
-                        )}
-                    </div>
+                    <Link href={`/tree/${data.targetCourse.department}${data.targetCourse.courseNumber}`}>
+                        <div className="px-6 py-3 bg-blue-100 border-2 border-blue-300 rounded-lg font-bold text-blue-800 text-center hover:bg-blue-200 hover:border-blue-400 transition-colors cursor-pointer">
+                            <div className="text-lg">{data.targetCourse.department} {data.targetCourse.courseNumber}</div>
+                            {data.targetCourse.title && (
+                                <div className="text-sm opacity-75 mt-1">{data.targetCourse.title}</div>
+                            )}
+                        </div>
+                    </Link>
                 </div>
 
                 {/* Prerequisites Tree */}
