@@ -252,10 +252,8 @@ STAT        240            Probability (Advanced Level)       2      STAT 240   
 
 
 --> Fancy Feature 5 Output
-
-department     course_number       min_grade       fall     winter    spring 
-----------------------------------------------------------------------------------
-MATH           116                                   t        f         f
-MATH           118                                   t        t         t
-STAT           220                   70              t        t         f
-STAT           231                                   t        t         t
+department      course_number      issue_type                conflict_department     conflict_course_number 
+----------------------------------------------------------------------------------------------------------------
+MATH            136                Missing prerequisite                         
+CS              135                Antirequisite conflict    CS                      115
+CS              115                Antirequisite conflict    CS                      135

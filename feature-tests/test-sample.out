@@ -71,8 +71,6 @@ master          W1                2                   1              TOO MANY UN
 
 --> Fancy Feature 5 Output
 
-department     course_number       min_grade       fall     winter    spring 
-----------------------------------------------------------------------------------
-MATH               118                                t        t         t
-STAT               220                70              t        t         f
-STAT               231                                t        t         t
+department         course_number           issue_type                   conflict_department     conflict_course_number 
+-------------------------------------------------------------------------------------------------------------------------
+CS                 115                     Antirequisite conflict       CS                      135

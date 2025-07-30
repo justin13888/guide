@@ -166,9 +166,6 @@ ORDER BY depth, department, course_number;
 
 
 ---> Fancy Feature 5
--- A comprehensive SQL query that validates user course selections by checking 
--- prerequisite completion (with term order validation) and detecting antirequisite conflicts.
-
 WITH input_courses AS (
   SELECT department, course_number, level_term FROM user_courses WHERE user_id = 'master'
 ),
@@ -315,6 +312,7 @@ antireq_conflicts AS (
 -- Combine both checks
 SELECT 
   department, 
+  course_number,
   issue_type,
   NULL as conflict_department,
   NULL as conflict_course_number
