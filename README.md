@@ -5,16 +5,18 @@ Your guide to UW course planning.
 We’ve built a course planning tool designed specifically for University of Waterloo students to simplify the complex process of figuring out which courses they can take, when they can take them, and how they fit into their schedules and degrees.
 The app helps users search for courses using advanced filters, explore prereqs, coreqs and antireqs, and get personalized course suggestions based on their academic history. It even supports features like prerequisite path exploration and eligibility checking using SQL triggers — ensuring a student can only add valid course combinations to their plan. To generate the dataset, we scrape data from the undergraduate calendar, and the courses API.
 
-Our features include - 
+## Features
 
-5 Basic Features
+**5 Basic Features**
+
 1. Course Department Statistics - Display count of courses grouped by department for overview of course distributio
 2. Course Filtering by Term and Level - Filter courses by availability (fall/winter/spring) and course level (100s, 200s, etc.)
 3. Course Leads to Display - This feature displays courses that have the user-selected course as a prerequisite (ie. which courses a course “leads to”). 
 4. Antirequisite Display - This feature displays which courses have the user-selected course as an antirequisite.
 5. Academic Load Validation - Check if a student's course load per term exceeds limits (max 7 courses for regular terms, 0.5 units for work terms)
 
-5 Advanced Features
+**5 Advanced Features**
+
 1. Prerequisite Path Visualization - Display prerequisite chains with path visualization for complex course dependencies
 2. Course Recommendation Engine - Suggest courses based on completed prerequisites by analyzing the prerequisite tree backwards from taken courses
 3. Course Validator - Validate prerequisite satisfaction considering complex AND/OR logic in prerequisite trees. It will check the user’s eligibility to take the courses they have specified in their course schedule depending on if they have completed the prereqs.
