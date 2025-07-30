@@ -117,16 +117,19 @@ const PrerequisiteTreeVisualization: React.FC<PrerequisiteTreeVisualizationProps
 
                 {/* Children */}
                 {node.children.length > 0 && (
-                    <div className="mt-4">
+                    <div className="mt-4 w-full">
                         {/* Vertical line from parent to children */}
                         <div className="w-0.5 bg-gray-300 h-4 mx-auto mb-2"></div>
 
-                        {/* Children container - horizontal layout for multiple children */}
-                        <div className="flex items-start justify-center space-x-8">
+                        {/* Children container with proper spacing and boundaries */}
+                        <div className="flex items-start justify-center space-x-12 min-w-full">
                             {node.children.map((child, index) => (
-                                <div key={child.id} className="flex flex-col items-center">
-                                    {/* Horizontal line to child */}
-                                    <div className="w-8 h-0.5 bg-gray-300 mb-2"></div>
+                                <div key={child.id} className="flex flex-col items-center flex-1">
+                                    {/* Horizontal line to child with better visual connection */}
+                                    <div className="w-full h-0.5 bg-gray-300 mb-2 relative">
+                                        {/* Add vertical connector at the end */}
+                                        <div className="absolute right-0 top-0 w-0.5 bg-gray-300 h-2"></div>
+                                    </div>
                                     {renderNode(child, level + 1)}
                                 </div>
                             ))}
@@ -148,8 +151,8 @@ const PrerequisiteTreeVisualization: React.FC<PrerequisiteTreeVisualizationProps
     }
 
     return (
-        <div className="overflow-auto">
-            <div className="flex flex-col items-center p-6">
+        <div className="w-full overflow-x-auto">
+            <div className="flex flex-col items-center p-6 min-w-max">
                 {/* Target Course */}
                 <div className="mb-8">
                     <div className="px-6 py-3 bg-blue-100 border-2 border-blue-300 rounded-lg font-bold text-blue-800 text-center">
@@ -161,7 +164,7 @@ const PrerequisiteTreeVisualization: React.FC<PrerequisiteTreeVisualizationProps
                 </div>
 
                 {/* Prerequisites Tree */}
-                <div className="flex flex-col items-center">
+                <div className="flex flex-col items-center w-full">
                     {treeNodes.map((node) => renderNode(node))}
                 </div>
             </div>
