@@ -46,7 +46,6 @@ didactic-octo-rotary-phone/
 - **Key Files**:
   - `test-sample.sql` - Sample feature tests
   - `test-production.sql` - Production feature tests
-  - `r15-performance-timings.sql` - Performance benchmarking for complex queries
   - `performance-timings-template.sql` - Template for performance testing
 - **Usage**: Validate features and measure query performance
 
