@@ -239,16 +239,56 @@ master          W3                 2                    1               TOO MANY
 
 --> Fancy Feature 1 Output
 
-department  course_number  title                              depth  path_string  path_array         parent_relation
---------------------------------------------------------------------------------------------------------------------
-MATH        118            Calculus 2 for Engineering         2      MATH 118     ["MATH 118"]       OR
-MATH        119            Calculus 2 for Engineering         2      MATH 119     ["MATH 119"]       OR
-MATH        128            Calculus 2 for the Sciences        2      MATH 128     ["MATH 128"]       OR
-MATH        138            Calculus 2 for Honours Mathematics 2      MATH 138     ["MATH 138"]       OR
-MATH        148            Calculus 2 (Advanced Level)        2      MATH 148     ["MATH 148"]       OR
-STAT        220            Probability (Non-Specialist Level) 2      STAT 220     ["STAT 220"]       OR
-STAT        230            Probability                        2      STAT 230     ["STAT 230"]       OR
-STAT        240            Probability (Advanced Level)       2      STAT 240     ["STAT 240"]       OR
+ node_id | relation_type | department | course_number | parent_node_id | parent_relation_type | parent_department | parent_course_number
+---------+---------------+------------+---------------+----------------+----------------------+-------------------+----------------------
+    1774 |               | MATH       | 119           |           3057 |                      | STAT              | 206
+    1774 |               | MATH       | 119           |           2671 |                      | STAT              | 220
+    1774 |               | MATH       | 119           |           2685 | OR                   |                   |
+    1778 |               | MATH       | 116           |           1774 |                      | MATH              | 119
+    1782 |               | MATH       | 117           |           1774 |                      | MATH              | 119
+    1791 |               | MATH       | 137           |           1774 |                      | MATH              | 119
+    1795 |               | MATH       | 147           |           1774 |                      | MATH              | 119
+    1802 |               | MATH       | 127           |           1774 |                      | MATH              | 119
+    1802 |               | MATH       | 127           |           1803 |                      | MATH              | 128
+    1803 |               | MATH       | 128           |           2671 |                      | STAT              | 220
+    1803 |               | MATH       | 128           |           2681 |                      | STAT              | 230
+    1803 |               | MATH       | 128           |           2685 | OR                   |                   |
+    1808 |               | MATH       | 116           |           1803 |                      | MATH              | 128
+    1813 |               | MATH       | 117           |           1803 |                      | MATH              | 128
+    1821 |               | MATH       | 137           |           1803 |                      | MATH              | 128
+    1824 |               | MATH       | 147           |           1803 |                      | MATH              | 128
+    1826 |               | MATH       | 138           |           2671 |                      | STAT              | 220
+    1826 |               | MATH       | 138           |           2682 |                      | STAT              | 240
+    1826 |               | MATH       | 138           |           2685 | OR                   |                   |
+    1826 |               | MATH       | 138           |           2698 | OR                   |                   |
+    1829 |               | MATH       | 116           |           1826 |                      | MATH              | 138
+    1833 |               | MATH       | 117           |           1826 |                      | MATH              | 138
+    1847 |               | MATH       | 148           |           2671 |                      | STAT              | 220
+    1847 |               | MATH       | 148           |           2682 |                      | STAT              | 240
+    1847 |               | MATH       | 148           |           2685 | OR                   |                   |
+    1847 |               | MATH       | 148           |           2698 | OR                   |                   |
+    2671 |               | STAT       | 220           |           2721 | OR                   |                   |
+    2673 |               | MATH       | 118           |           2671 |                      | STAT              | 220
+    2680 |               | STAT       | 231           |           5587 | OR                   |                   |
+    2681 |               | STAT       | 230           |           2721 | OR                   |                   |
+    2681 |               | STAT       | 230           |           2724 | OR                   |                   |
+    2682 |               | STAT       | 240           |           2721 | OR                   |                   |
+    2682 |               | STAT       | 240           |           2724 | OR                   |                   |
+    2685 | OR            |            |               |           2680 |                      | STAT              | 231
+    2686 |               | MATH       | 116           |           2681 |                      | STAT              | 230
+    2687 |               | MATH       | 137           |           2682 |                      | STAT              | 240
+    2689 |               | MATH       | 118           |           2685 | OR                   |                   |
+    2690 |               | MATH       | 117           |           2681 |                      | STAT              | 230
+    2692 |               | STAT       | 241           |           5587 | OR                   |                   |
+    2696 |               | MATH       | 137           |           2681 |                      | STAT              | 230
+    2698 | OR            |            |               |           2692 |                      | STAT              | 241
+    2702 |               | MATH       | 147           |           2681 |                      | STAT              | 230
+    2717 |               | MATH       | 118           |           2681 |                      | STAT              | 230
+    2721 | OR            |            |               |           2680 |                      | STAT              | 231
+    2724 | OR            |            |               |           2692 |                      | STAT              | 241
+    3057 |               | STAT       | 206           |           5587 | OR                   |                   |
+    3058 |               | MATH       | 115           |           3057 |                      | STAT              | 206
+    5587 | OR            |            |               |                |                      |                   |
 
 
 --> Fancy Feature 5 Output

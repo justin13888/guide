@@ -94,105 +94,56 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_course_prerequisites_dept_course ON 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_course_prerequisites_root_node ON course_prerequisites(root_node_id);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_courses_dept_course ON courses(department, course_number);
 
-WITH RECURSIVE prereq_paths AS (
-    -- Base case: Start from the root prerequisite node for the target course
+WITH RECURSIVE prerequisite_tree AS (
+    -- Base case: Start with a specific course
     SELECT 
-    pn.id,
-    pn.parent_id,
-    pn.relation_type,
-    pn.department,
-    pn.course_number,
-    pn.min_grade,
-    c.title,
-    0 as depth,
-    CASE 
-        WHEN pn.department IS NOT NULL AND pn.course_number IS NOT NULL 
-        THEN ARRAY[pn.department || ' ' || pn.course_number]
-        ELSE ARRAY[]::text[]
-    END as path_array,
-    CASE 
-        WHEN pn.department IS NOT NULL AND pn.course_number IS NOT NULL 
-        THEN pn.department || ' ' || pn.course_number
-        ELSE ''
-    END as path_string,
-    cp.root_node_id as original_root
+        pn.id as node_id,
+        pn.relation_type,
+        pn.department,
+        pn.course_number,
+        NULL::integer as parent_node_id,
+        NULL::relation_type as parent_relation_type,
+        NULL::varchar(10) as parent_department,
+        NULL::varchar(10) as parent_course_number
     FROM course_prerequisites cp
-    JOIN prerequisite_nodes pn ON pn.id = cp.root_node_id
-    LEFT JOIN courses c ON pn.department = c.department AND pn.course_number = c.course_number
-    WHERE cp.department = 'CS' AND cp.course_number = '240'
+    JOIN prerequisite_nodes pn ON cp.root_node_id = pn.id
+    WHERE cp.department = 'CS' AND cp.course_number = '480'
 
     UNION ALL
 
-    -- Recursive case: Traverse child nodes based on relation types
+    -- Recursive case: Get prerequisite nodes (children of current node)
     SELECT 
-    child.id,
-    child.parent_id,
-    child.relation_type,
-    child.department,
-    child.course_number,
-    child.min_grade,
-    c.title,
-    pp.depth + 1,
-    CASE 
-        WHEN child.department IS NOT NULL AND child.course_number IS NOT NULL 
-        THEN 
-        CASE 
-            WHEN pp.path_array = ARRAY[]::text[] 
-            THEN ARRAY[child.department || ' ' || child.course_number]
-            ELSE pp.path_array || (child.department || ' ' || child.course_number)
-        END
-        ELSE pp.path_array
-    END,
-    CASE 
-        WHEN child.department IS NOT NULL AND child.course_number IS NOT NULL 
-        THEN 
-        CASE 
-            WHEN pp.path_string = '' 
-            THEN child.department || ' ' || child.course_number
-            ELSE pp.path_string || ' -> ' || child.department || ' ' || child.course_number
-        END
-        ELSE pp.path_string
-    END,
-    pp.original_root
-    FROM prereq_paths pp
-    JOIN prerequisite_nodes child ON child.parent_id = pp.id
-    LEFT JOIN courses c ON child.department = c.department AND child.course_number = c.course_number
-    WHERE pp.depth < 10
-    AND (child.department IS NULL OR child.course_number IS NULL OR 
-            NOT (child.department || ' ' || child.course_number = ANY(pp.path_array)))
-),
--- Extract only the leaf nodes (actual courses) from the prerequisite tree
-leaf_courses AS (
-    SELECT DISTINCT
-    pp.department,
-    pp.course_number,
-    pp.title,
-    pp.depth,
-    pp.path_string,
-    pp.path_array,
-    pp.original_root,
-    -- Determine if this is part of an AND or OR relationship by checking parent
-    COALESCE(parent.relation_type, 'AND') as parent_relation
-    FROM prereq_paths pp
-    LEFT JOIN prerequisite_nodes parent ON parent.id = pp.parent_id
-    WHERE pp.department IS NOT NULL 
-    AND pp.course_number IS NOT NULL
-    -- Only include leaf nodes (courses that don't have children in our tree)
-    AND NOT EXISTS (
-        SELECT 1 FROM prerequisite_nodes child 
-        WHERE child.parent_id = pp.id
-    )
+        COALESCE(next_root.root_node_id, child.id) as node_id,
+        child.relation_type,
+        child.department,
+        child.course_number,
+        pt.node_id as parent_node_id,
+        pt.relation_type as parent_relation_type,
+        pt.department as parent_department,
+        pt.course_number as parent_course_number
+    FROM prerequisite_tree pt
+    JOIN prerequisite_nodes child ON child.parent_id = pt.node_id
+    LEFT JOIN course_prerequisites next_root ON 
+        child.department = next_root.department AND 
+        child.course_number = next_root.course_number
 )
+-- Get all nodes, including intermediary AND/OR nodes
 SELECT DISTINCT
+    node_id,
+    relation_type,
     department,
     course_number,
-    title,
-    depth,
-    path_string,
-    path_array,
-    parent_relation
-FROM leaf_courses
-ORDER BY depth, department, course_number;
+    parent_node_id,
+    parent_relation_type,
+    parent_department,
+    parent_course_number
+FROM prerequisite_tree
+ORDER BY 
+    node_id,
+    department,
+    course_number,
+    parent_department,
+    parent_course_number;
 
 --> Fancy Feature 2
 WITH courses_taken(department, course_number) as 
