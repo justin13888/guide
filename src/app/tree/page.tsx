@@ -3,20 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
-import CourseTreeVisualization from "~/app/_components/course-tree-visualization";
+import PrerequisiteTreeVisualization from "~/app/_components/prerequisite-tree-visualization";
 
 export default function CourseTreePage() {
     const [department, setDepartment] = useState("");
     const [courseNumber, setCourseNumber] = useState("");
-    const [maxDepth, setMaxDepth] = useState(1000);
 
     const {
         data: treeData,
         isLoading,
         error,
         refetch,
-    } = api.planner.getCourseTree.useQuery(
-        { department, courseNumber, maxDepth },
+    } = api.planner.getPrerequisiteLinks.useQuery(
+        { department, courseNumber },
         {
             enabled: department.length > 0 && courseNumber.length > 0,
         }
@@ -102,20 +101,6 @@ export default function CourseTreePage() {
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
                         </div>
-                        <div className="min-w-[150px]">
-                            <label htmlFor="maxDepth" className="block text-sm font-medium text-gray-700 mb-2">
-                                Max Depth
-                            </label>
-                            <input
-                                type="number"
-                                id="maxDepth"
-                                value={maxDepth}
-                                onChange={(e) => setMaxDepth(parseInt(e.target.value) || 5)}
-                                min="1"
-                                max="20"
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                        </div>
                         <button
                             type="submit"
                             disabled={!department || !courseNumber || isLoading}
@@ -147,11 +132,11 @@ export default function CourseTreePage() {
                                     {treeData.targetCourse.title && ` - ${treeData.targetCourse.title}`}
                                 </h2>
                                 <div className="text-sm text-gray-600 mt-2">
-                                    {!treeData.hasPrerequisites ? (
+                                    {treeData.totalNodes === 0 ? (
                                         <span className="text-green-600 font-medium">No prerequisites required</span>
                                     ) : (
                                         <span>
-                                            Tree depth: {treeData.maxDepth} | Total nodes: {treeData.totalNodes}
+                                            Total nodes: {treeData.totalNodes}
                                         </span>
                                     )}
                                 </div>
@@ -164,8 +149,8 @@ export default function CourseTreePage() {
                             </Link>
                         </div>
 
-                        {treeData.hasPrerequisites && treeData.tree ? (
-                            <CourseTreeVisualization tree={treeData.tree} />
+                        {treeData.totalNodes > 0 ? (
+                            <PrerequisiteTreeVisualization data={treeData} />
                         ) : (
                             <div className="text-center py-8 text-gray-500">
                                 This course has no prerequisites.
