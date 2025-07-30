@@ -142,3 +142,4 @@ ORDER BY
     course_number,
     parent_department,
     parent_course_number;
+

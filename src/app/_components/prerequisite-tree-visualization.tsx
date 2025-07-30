@@ -8,10 +8,9 @@ interface PrerequisiteNode {
     relationType: string | null;
     department: string | null;
     courseNumber: string | null;
-    minGrade: number | null;
     title: string | null;
-    depth: number;
     children: number[];
+    depth: number;
 }
 
 interface PrerequisiteTreeData {
@@ -33,7 +32,6 @@ interface TreeNode {
     department?: string;
     courseNumber?: string;
     title?: string;
-    minGrade?: number;
     children: TreeNode[];
     isLeaf: boolean;
     depth: number;
@@ -56,7 +54,6 @@ const PrerequisiteTreeVisualization: React.FC<PrerequisiteTreeVisualizationProps
                 department: node.department ?? undefined,
                 courseNumber: node.courseNumber ?? undefined,
                 title: node.title ?? undefined,
-                minGrade: node.minGrade ?? undefined,
                 children: [],
                 isLeaf: node.department !== null && node.courseNumber !== null,
                 depth: node.depth,
@@ -110,11 +107,6 @@ const PrerequisiteTreeVisualization: React.FC<PrerequisiteTreeVisualizationProps
                             {node.title && (
                                 <div className="text-xs opacity-75 mt-1 line-clamp-2">
                                     {node.title}
-                                </div>
-                            )}
-                            {node.minGrade && (
-                                <div className="text-xs opacity-75 mt-1">
-                                    Min Grade: {node.minGrade}
                                 </div>
                             )}
                         </div>

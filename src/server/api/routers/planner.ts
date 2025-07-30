@@ -602,105 +602,109 @@ export const plannerRouter = createTRPCRouter({
         throw new Error(`Course ${department} ${courseNumber} not found`);
       }
 
-      // Use a modified recursive CTE that returns a more convenient tree structure
+      // Use the exact same query as test.sql but with variable parameters
       const prerequisiteLinksQuery = sql`
         WITH RECURSIVE prerequisite_tree AS (
-          -- Base case: Start with the root prerequisite node for the target course
+          -- Base case: Start with a specific course
           SELECT 
-            pn.id,
-            pn.parent_id,
+            pn.id as node_id,
             pn.relation_type,
             pn.department,
             pn.course_number,
-            pn.min_grade,
-            c.title,
-            0 as depth,
-            ARRAY[pn.id] as path
+            NULL::integer as parent_node_id,
+            NULL::relation_type as parent_relation_type,
+            NULL::varchar(10) as parent_department,
+            NULL::varchar(10) as parent_course_number
           FROM course_prerequisites cp
           JOIN prerequisite_nodes pn ON cp.root_node_id = pn.id
-          LEFT JOIN courses c ON pn.department = c.department AND pn.course_number = c.course_number
           WHERE cp.department = ${department} AND cp.course_number = ${courseNumber}
 
           UNION ALL
 
-          -- Recursive case: Get all child nodes
+          -- Recursive case: Get prerequisite nodes (children of current node)
           SELECT 
-            child.id,
-            child.parent_id,
+            COALESCE(next_root.root_node_id, child.id) as node_id,
             child.relation_type,
             child.department,
             child.course_number,
-            child.min_grade,
-            c.title,
-            pt.depth + 1,
-            pt.path || child.id
+            pt.node_id as parent_node_id,
+            pt.relation_type as parent_relation_type,
+            pt.department as parent_department,
+            pt.course_number as parent_course_number
           FROM prerequisite_tree pt
-          JOIN prerequisite_nodes child ON child.parent_id = pt.id
-          LEFT JOIN courses c ON child.department = c.department AND child.course_number = c.course_number
-          WHERE NOT (child.id = ANY(pt.path)) -- Avoid cycles
+          JOIN prerequisite_nodes child ON child.parent_id = pt.node_id
+          LEFT JOIN course_prerequisites next_root ON 
+            child.department = next_root.department AND 
+            child.course_number = next_root.course_number
         )
-        SELECT 
-          id,
-          parent_id,
-          relation_type,
-          department,
-          course_number,
-          min_grade,
-          title,
-          depth
-        FROM prerequisite_tree
-        ORDER BY depth, parent_id NULLS FIRST, id;
+        -- Get all nodes, including intermediary AND/OR nodes, with course titles
+        SELECT DISTINCT
+          pt.node_id,
+          pt.relation_type,
+          pt.department,
+          pt.course_number,
+          pt.parent_node_id,
+          pt.parent_relation_type,
+          pt.parent_department,
+          pt.parent_course_number,
+          c.title
+        FROM prerequisite_tree pt
+        LEFT JOIN courses c ON pt.department = c.department AND pt.course_number = c.course_number
+        ORDER BY 
+          pt.node_id,
+          pt.department,
+          pt.course_number,
+          pt.parent_department,
+          pt.parent_course_number;
       `;
 
       const rawResults = await ctx.db.execute(prerequisiteLinksQuery);
 
-      // Build a tree structure from the results
+      // Parse the results to build a proper tree structure
       const nodeMap = new Map<number, {
         id: number;
         parentId: number | null;
         relationType: string | null;
         department: string | null;
         courseNumber: string | null;
-        minGrade: number | null;
         title: string | null;
-        depth: number;
         children: number[];
+        depth: number;
       }>();
 
-      let maxDepth = 0;
+      const rootNodes: number[] = [];
 
       // First pass: create all nodes
       for (const row of rawResults) {
-        const id = row.id as number;
-        const parentId = row.parent_id as number | null;
+        const nodeId = row.node_id as number;
         const relationType = row.relation_type as string | null;
         const dept = row.department as string | null;
         const courseNum = row.course_number as string | null;
-        const minGrade = row.min_grade as number | null;
+        const parentNodeId = row.parent_node_id as number | null;
         const title = row.title as string | null;
-        const depth = row.depth as number;
 
-        maxDepth = Math.max(maxDepth, depth);
+        // Skip if we already have this node (due to DISTINCT)
+        if (nodeMap.has(nodeId)) continue;
 
-        nodeMap.set(id, {
-          id,
-          parentId,
+        nodeMap.set(nodeId, {
+          id: nodeId,
+          parentId: parentNodeId,
           relationType,
           department: dept,
           courseNumber: courseNum,
-          minGrade,
           title,
-          depth,
           children: [],
+          depth: 0, // Will be calculated in second pass
         });
+
+        if (parentNodeId === null) {
+          rootNodes.push(nodeId);
+        }
       }
 
-      // Second pass: build parent-child relationships
-      const rootNodes: number[] = [];
+      // Second pass: build parent-child relationships and calculate depth
       for (const node of nodeMap.values()) {
-        if (node.parentId === null) {
-          rootNodes.push(node.id);
-        } else {
+        if (node.parentId !== null) {
           const parentNode = nodeMap.get(node.parentId);
           if (parentNode) {
             parentNode.children.push(node.id);
@@ -708,17 +712,27 @@ export const plannerRouter = createTRPCRouter({
         }
       }
 
-      // Convert to a more convenient format for the frontend
+      // Calculate depths
+      const calculateDepth = (nodeId: number, depth = 0) => {
+        const node = nodeMap.get(nodeId);
+        if (!node) return;
+
+        node.depth = depth;
+        node.children.forEach(childId => calculateDepth(childId, depth + 1));
+      };
+
+      rootNodes.forEach(nodeId => calculateDepth(nodeId));
+
+      // Convert to the format expected by the frontend
       const treeNodes: Record<string, {
         id: number;
         parentId: number | null;
         relationType: string | null;
         department: string | null;
         courseNumber: string | null;
-        minGrade: number | null;
         title: string | null;
-        depth: number;
         children: number[];
+        depth: number;
       }> = {};
 
       for (const [id, node] of nodeMap) {
@@ -733,7 +747,7 @@ export const plannerRouter = createTRPCRouter({
         },
         nodes: treeNodes,
         rootNodes,
-        maxDepth,
+        maxDepth: Math.max(...Array.from(nodeMap.values()).map(n => n.depth)),
         totalNodes: nodeMap.size,
       };
     }),
